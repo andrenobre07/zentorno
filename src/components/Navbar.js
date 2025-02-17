@@ -1,19 +1,22 @@
+// components/Navbar.js
 "use client";
 
 import Link from "next/link";
 import { useState } from "react";
-
+import { useRouter } from "next/router";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+  const router = useRouter();
+  const isHome = router.pathname === "/"; // se estiver na página inicial
+
   return (
-    <nav className="fixed top-0 left-0 w-full z-50 bg-transparent">
+    <nav className={`fixed top-0 left-0 w-full z-50 ${isHome ? "bg-transparent" : "bg-black"}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
         {/* Logo e nome */}
         <div className="flex items-center">
           <img src="/logo.png" alt="Logo Zentorno" className="h-20 w-20 mr-2" />
-          <span className="text-white font-bold text-xl">Zentorno</span>
+          <Link href="/" className="text-white font-bold text-xl">Zentorno</Link>
         </div>
 
         {/* Menu para telas maiores */}

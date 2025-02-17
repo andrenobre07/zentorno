@@ -1,3 +1,4 @@
+// pages/index.js
 import Navbar from "../components/Navbar";
 
 export default function Home() {
@@ -15,12 +16,12 @@ export default function Home() {
           muted 
         />
         {/* Conteúdo sobre o vídeo */}
-        <div className="relative z-10 flex flex-col items-center justify-center h-full">
+        <div className="relative z-10 flex flex-col items-start justify-center h-full pl-8">
           <h1 className="text-white text-5xl font-bold">Bem-vindo à Zentorno</h1>
           <p className="text-white mt-4">Encontre o carro dos seus sonhos</p>
           <a 
             href="/comprar" 
-            className="mt-8 px-6 py-3 bg-blue-600 text-white rounded-full hover:bg-blue-700"
+            className="mt-8 px-6 py-3 bg-transparent border border-blue-600 text-blue-600 rounded-full hover:bg-blue-600 hover:text-white"
           >
             Comprar Carros
           </a>
