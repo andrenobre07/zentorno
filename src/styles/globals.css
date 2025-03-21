@@ -1,3 +1,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Exemplo de variáveis de cor */
+:root {
+  --color-primary: #4f46e5; /* Indigo-600 do Tailwind */
+  --color-secondary: #1f2937; /* Gray-800 do Tailwind */
+  --color-accent: #ec4899; /* Pink-500 do Tailwind */
+}
+
+/* Personalização geral do body */
+body {
+  font-family: 'Inter', sans-serif; /* Fonte moderna */
+  background-color: #f9fafb; /* Gray-50 do Tailwind */
+  color: #1f2937; /* Gray-800 */
+  margin: 0;
+  padding: 0;
+}
+
+/* Exemplo de classe para gradiente de fundo */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #fff;
+}
+
+/* Exemplo de animação de transição suave */
+.transition-default {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Botão personalizado */
+.btn-primary {
+  @apply px-6 py-3 bg-indigo-600 text-white rounded-full font-semibold hover:bg-indigo-700 transition-default;
+}
+
+/* Exemplo de sombra sutil */
+.shadow-soft {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+}
+
+/* Classe para um container mais elegante */
+.container-custom {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+/* Se quiser remover scroll bar no Chrome, etc. (opcional)
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #e5e7eb;
+}
+::-webkit-scrollbar-thumb {
+  background: #9ca3af;
+  border-radius: 9999px;
+}
+*/
+
