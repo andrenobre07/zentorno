@@ -1,84 +1,119 @@
-// components/Navbar.js
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const router = useRouter();
-  const isHome = router.pathname === "/"; // se estiver na página inicial
+  const isHome = router.pathname === "/";
+
+  // Efeito para detectar scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav
-      className={`fixed top-0 left-0 w-full z-50 transition-default ${
-        isHome ? "bg-transparent" : "bg-white shadow-md"
-      }`}
-    >
-      <div className="container-custom flex items-center justify-between h-16">
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
+      scrolled || !isHome ? "bg-black bg-opacity-90 shadow-lg" : "bg-transparent"
+    }`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20">
         {/* Logo e nome */}
-        <div className="flex items-center space-x-2">
-          <img src="/logo.png" alt="Logo Zentorno" className="h-10 w-10" />
-          <Link href="/" className="text-xl font-bold text-indigo-600">
-            Zentorno
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center">
+            <img src="/logo.png" alt="Logo Zentorno" className="h-16 w-16 mr-2 transition-transform duration-300 hover:scale-110" />
+            <span className="text-white font-bold text-xl tracking-wide">ZENTORNO</span>
           </Link>
         </div>
 
-        {/* Menu para telas maiores */}
-        <div className="hidden md:flex space-x-6">
-          <Link href="/" className="text-gray-700 hover:text-indigo-600 transition-default">
-            Menu
+        {/* Menu para telas maiores com destaque para item ativo */}
+        <div className="hidden md:flex space-x-8">
+          <Link href="/"
+            className={`text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 border-b-2 ${
+              router.pathname === '/' ? 'border-blue-500' : 'border-transparent'
+            }`}>
+            Home
           </Link>
-          <Link href="/comprar" className="text-gray-700 hover:text-indigo-600 transition-default">
-            Comprar
+          <Link href="/comprar"
+            className={`text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 border-b-2 ${
+              router.pathname === '/comprar' ? 'border-blue-500' : 'border-transparent'
+            }`}>
+            Catálogo
           </Link>
-          <Link href="/login" className="text-gray-700 hover:text-indigo-600 transition-default">
+          <Link href="#sobre-nos"
+            className="text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 border-b-2 border-transparent">
+            Sobre
+          </Link>
+          <Link href="/login"
+            className={`text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 border-b-2 ${
+              router.pathname === '/login' ? 'border-blue-500' : 'border-transparent'
+            }`}>
             Login
           </Link>
         </div>
 
-        {/* Botão para mobile */}
+        {/* Botão para mobile animado */}
         <div className="md:hidden">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-gray-700 focus:outline-none transition-default"
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+            className="text-white focus:outline-none p-2"
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
+            <div className="w-6 flex flex-col justify-center items-center">
+              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+                isMenuOpen ? 'rotate-45 translate-y-1' : '-translate-y-0.5'
+              }`} />
+              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm my-0.5 ${
+                isMenuOpen ? 'opacity-0' : 'opacity-100'
+              }`} />
+              <span className={`bg-white block transition-all duration-300 ease-out h-0.5 w-6 rounded-sm ${
+                isMenuOpen ? '-rotate-45 -translate-y-1' : 'translate-y-0.5'
+              }`} />
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Menu mobile */}
-      {isMenuOpen && (
-        <div className="md:hidden bg-white shadow-md">
-          <Link
-            href="/"
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-default"
-          >
-            Menu
+      {/* Menu mobile com animação */}
+      <div className={`md:hidden absolute w-full bg-black bg-opacity-95 transition-all duration-300 ease-in-out ${
+        isMenuOpen ? 'max-h-60 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+      }`}>
+        <div className="px-4 py-2">
+          <Link href="/" 
+            className={`block py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
+              router.pathname === '/' ? 'text-blue-400' : ''
+            }`}>
+            Home
           </Link>
-          <Link
-            href="/comprar"
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-default"
-          >
-            Comprar
+          <Link href="/comprar" 
+            className={`block py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
+              router.pathname === '/comprar' ? 'text-blue-400' : ''
+            }`}>
+            Catálogo
           </Link>
-          <Link
-            href="/login"
-            className="block px-4 py-2 text-gray-700 hover:bg-gray-100 transition-default"
-          >
+          <a href="#sobre-nos" 
+            className="block py-3 text-white hover:text-blue-400 border-b border-gray-800"
+            onClick={() => setIsMenuOpen(false)}>
+            Sobre
+          </a>
+          <Link href="/login" 
+            className={`block py-3 text-white hover:text-blue-400 ${
+              router.pathname === '/login' ? 'text-blue-400' : ''
+            }`}>
             Login
           </Link>
         </div>
-      )}
+      </div>
     </nav>
   );
 }
