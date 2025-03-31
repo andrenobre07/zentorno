@@ -51,10 +51,6 @@ export default function Navbar() {
             }`}>
             Catálogo
           </Link>
-          <Link href="#sobre-nos"
-            className="text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 border-b-2 border-transparent">
-            Sobre
-          </Link>
           <Link href="/login"
             className={`text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 border-b-2 ${
               router.pathname === '/login' ? 'border-blue-500' : 'border-transparent'

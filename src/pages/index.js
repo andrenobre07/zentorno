@@ -40,10 +40,10 @@ export default function Home() {
         {/* Conteúdo do Hero */}
         <div className="relative z-10 container mx-auto px-4 flex flex-col items-center justify-center h-full text-center">
           <h1 className="text-5xl md:text-7xl font-bold tracking-tighter mb-4 text-white drop-shadow-lg">
-            REDEFINA <span className="text-blue-500">PERFORMANCE</span>
+            ZEN<span className="text-blue-500">TORNO</span>
           </h1>
           <p className="text-xl md:text-2xl max-w-2xl mb-8 text-gray-200">
-            Carros únicos criados sob medida para você. Potência, elegância e tecnologia.
+            Carros únicos criados sob medida para ti. Potência, elegância e tecnologia.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Link href="/comprar">
