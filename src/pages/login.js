@@ -50,8 +50,8 @@ export default function Login() {
                 transition={{ duration: 0.8 }}
                 className="text-center text-white"
               >
-                <h2 className="text-3xl font-bold mb-4">Encontre o seu carro ideal</h2>
-                <p className="text-lg mb-6">Acesse sua conta para explorar mais de 100 modelos exclusivos e personalizá-los ao seu estilo</p>
+                <h2 className="text-3xl font-bold mb-4">Encontra o teu carro ideal</h2>
+                <p className="text-lg mb-6">Acessa a tua conta para explorar mais de 100 modelos exclusivos e personalizá-los ao teu estilo</p>
                 <div className="flex gap-2 justify-center">
                   <div className="w-3 h-3 rounded-full bg-white"></div>
                   <div className="w-3 h-3 rounded-full bg-white opacity-60"></div>
@@ -65,7 +65,7 @@ export default function Login() {
           <div className="p-8 md:p-12">
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900">Bem-vindo de volta</h1>
-              <p className="mt-2 text-gray-600">Entre para explorar nossos carros exclusivos</p>
+              <p className="mt-2 text-gray-600">Entra para explorar os nossos carros exclusivos</p>
             </div>
             
             <div className="space-y-6">
@@ -93,7 +93,7 @@ export default function Login() {
                   <div className="w-full border-t border-gray-300"></div>
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Ou continue com</span>
+                  <span className="px-2 bg-white text-gray-500">Ou continua com</span>
                 </div>
               </div>
               
@@ -108,7 +108,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
-                    placeholder="Digite seu email"
+                    placeholder="Digita a teu email"
                     required
                   />
                 </div>
@@ -119,7 +119,7 @@ export default function Login() {
                       Senha
                     </label>
                     <Link href="/esqueci-senha" className="text-sm text-blue-600 hover:text-blue-800">
-                      Esqueceu a senha?
+                      Esqueceste-te da senha?
                     </Link>
                   </div>
                   <input 
@@ -128,7 +128,7 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
-                    placeholder="Digite sua senha"
+                    placeholder="Digita a tua senha"
                     required
                   />
                 </div>

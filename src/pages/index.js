@@ -159,7 +159,7 @@ export default function Home() {
               <div className="text-gray-300">Suporte ao Cliente</div>
             </div>
             <div className="text-center p-6 transform hover:scale-105 transition-transform duration-300">
-              <div className="text-4xl font-bold text-white mb-2">50+</div>
+              <div className="text-4xl font-bold text-white mb-2">5+</div>
               <div className="text-gray-300">Opções de Personalização</div>
             </div>
           </div>
@@ -184,10 +184,10 @@ export default function Home() {
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">SOBRE A ZENTORNO</span>
               </h2>
               <p className="text-gray-300 mb-6 text-lg">
-                A Zentorno nasceu da paixão por carros excepcionais e da visão de oferecer veículos únicos que refletem a personalidade de seus proprietários.
+                A Zentorno nasceu da paixão por carros excepcionais e da visão de oferecer veículos únicos que refletem a personalidade dos teus proprietários.
               </p>
               <p className="text-gray-300 mb-8 text-lg">
-                Nossa equipe de engenheiros e designers trabalha incansavelmente para criar máquinas que não apenas impressionam visualmente, mas também entregam performance sem igual e experiências de condução emocionantes.
+                A nossa equipa de engenheiros e designers trabalha incansavelmente para criar máquinas que não apenas impressionam visualmente, mas também entregam performance sem igual e experiências de condução emocionantes.
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center">
@@ -238,9 +238,9 @@ export default function Home() {
       {/* Call to Action */}
       <section className="py-16 bg-gradient-to-r from-blue-900 to-blue-700">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6 text-white">Pronto para encontrar o carro dos seus sonhos?</h2>
+          <h2 className="text-3xl font-bold mb-6 text-white">Pronto para encontrares o carro dos teus sonhos?</h2>
           <p className="text-xl text-gray-200 mb-8 max-w-2xl mx-auto">
-            Descubra nossa coleção exclusiva de veículos e crie o seu próprio design personalizado.
+            Descubra a nossa coleção exclusiva de veículos e cria o teu próprio design personalizado.
           </p>
           <Link href="/comprar">
             <button className="px-8 py-4 bg-white text-blue-900 rounded-full font-bold hover:bg-gray-100 transition-colors duration-300 shadow-lg transform hover:scale-105">

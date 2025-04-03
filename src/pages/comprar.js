@@ -53,8 +53,8 @@ export default function Comprar() {
         <div className="absolute inset-0 bg-black opacity-30"></div>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center text-white px-4">
-            <h1 className="text-5xl font-bold mb-4">Encontre seu próximo carro</h1>
-            <p className="text-xl max-w-2xl mx-auto">Explore nossa coleção exclusiva e encontre o veículo dos seus sonhos com opções personalizáveis</p>
+            <h1 className="text-5xl font-bold mb-4">Encontra o teu próximo carro</h1>
+            <p className="text-xl max-w-2xl mx-auto">Explora a nossa coleção exclusiva e encontra o veículo dos teus sonhos com opções personalizáveis</p>
           </div>
         </div>
       </div>
