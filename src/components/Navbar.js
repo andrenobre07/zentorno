@@ -45,7 +45,7 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-white font-bold text-xl tracking-wide group-hover:text-blue-400 transition-colors duration-300">ZENTORNO</span>
-              <span className="text-blue-500 text-xs uppercase tracking-widest">Premium Auto</span>
+           
             </div>
           </Link>
         </div>
@@ -140,19 +140,7 @@ export default function Navbar() {
             <Car size={18} className="mr-2" />
             <span>Catálogo</span>
           </Link>
-          <Link href="/personalizar" 
-            className={`flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
-              pathname === '/personalizar' ? 'text-blue-400' : ''
-            }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <span>Personalizar</span>
-          </Link>
-          <a href="#sobre-nos" 
-            className="flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800"
-            onClick={() => setIsMenuOpen(false)}>
-            <span>Sobre</span>
-          </a>
+          
           <Link href="/login" 
             className={`flex items-center py-3 mt-2 text-white hover:text-blue-400 ${
               pathname === '/login' ? 'text-blue-400' : ''
