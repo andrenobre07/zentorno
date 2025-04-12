@@ -120,6 +120,14 @@ export default function Footer() {
                   Sobre Nós
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/login"
+                  className="text-gray-400 hover:text-blue-500 transition-colors duration-300"
+                >
+                  Login
+                </Link>
+              </li>
             </ul>
           </div>
 
