@@ -5,65 +5,115 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react"; // Importando ícones para mostrar/ocultar senha
 
+// --- IMPORTAÇÕES PARA FIREBASE E ROUTER ---
+import { useRouter } from "next/router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore"; // Importa doc e setDoc para Firestore
+import { auth, db } from "../lib/firebaseConfig"; // Certifique-se que o caminho está correto e que 'db' é exportado
+
 export default function Registrar() {
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState(""); // Estado para confirmar a senha
+  const [termsAccepted, setTermsAccepted] = useState(false); // Estado para os termos
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Estado para mostrar/ocultar confirmar senha
   const [loading, setLoading] = useState(false);
-  const [formErrors, setFormErrors] = useState({});
+  const [formErrors, setFormErrors] = useState({}); // Erros de validação do formulário
+  const [registrationError, setRegistrationError] = useState(''); // Erro geral do Firebase
+
+  const router = useRouter(); // Inicializa o router do Next.js
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!nome.trim()) errors.nome = "Nome é obrigatório";
-    
+
     if (!email.trim()) {
       errors.email = "Email é obrigatório";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       errors.email = "Email inválido";
     }
-    
+
     if (!password) {
       errors.password = "Senha é obrigatória";
     } else if (password.length < 6) {
       errors.password = "A senha deve ter pelo menos 6 caracteres";
     }
-    
+
     if (password !== confirmPassword) {
       errors.confirmPassword = "As senhas não coincidem";
     }
-    
+
     if (!termsAccepted) {
       errors.terms = "Você precisa aceitar os termos e condições";
     }
-    
+
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => { // Tornar a função assíncrona
     e.preventDefault();
-    
+    setFormErrors({}); // Limpar erros anteriores
+    setRegistrationError(''); // Limpa erros gerais
+
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
     }
-    
+
     setLoading(true);
-    
-    // Simulate registration (replace with actual registration logic)
-    setTimeout(() => {
-      console.log("Registration attempt with:", { nome, email, password });
+
+    try {
+      // 1. Tenta criar o utilizador no Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+
+      // 2. Guarda o 'nome' e 'email' do utilizador na coleção 'users' do Firestore
+      // O UID do utilizador é usado como ID do documento no Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        name: nome,
+        email: email,
+        createdAt: new Date().toISOString() // Adiciona um timestamp de criação
+      });
+
+      // Redireciona para a página de login após o registo bem-sucedido
+      router.push('/login');
+
+    } catch (err) {
+      console.error("Erro de registo:", err.code, err.message);
+      // Mapear erros do Firebase para o seu estado de erros
+      let errorMessage = "Ocorreu um erro ao criar a conta. Tente novamente.";
+      if (err.code) {
+        switch (err.code) {
+          case 'auth/email-already-in-use':
+            errorMessage = 'Este endereço de email já está a ser utilizado.';
+            break;
+          case 'auth/invalid-email':
+            errorMessage = 'O formato do email é inválido.';
+            break;
+          case 'auth/operation-not-allowed':
+            errorMessage = 'O registo com email/password não está ativado no seu projeto Firebase. Verifique as configurações de autenticação.';
+            break;
+          case 'auth/weak-password':
+            errorMessage = 'A senha é muito fraca. Por favor, use uma mais forte.';
+            break;
+          case 'permission-denied':
+            errorMessage = 'Permissão negada ao guardar os dados do utilizador. Verifique as regras do Firestore.';
+            break;
+          default:
+            errorMessage = `Erro: ${err.message}`; // Mensagem mais genérica para outros erros
+        }
+      }
+      setRegistrationError(errorMessage); // Define o erro para ser mostrado no UI
+    } finally {
       setLoading(false);
-      // Redirect to homepage or login after successful registration
-      // router.push('/login');
-    }, 1500);
+    }
   };
 
+  // As imagens de carro para o lado esquerdo
   const carImages = [
     "/car-register.jpg",
     "/sports-car.jpg",
@@ -73,16 +123,16 @@ export default function Registrar() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-24">
       <Navbar />
-      
+
       <section className="flex items-center justify-center py-16 px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 bg-white rounded-xl shadow-xl w-full max-w-5xl overflow-hidden">
-          {/* Lado esquerdo - Imagem com efeito de parallax */}
+          {/* Lado esquerdo - Imagem com efeito de parallax e texto */}
           <div className="hidden md:block relative h-full min-h-[600px] bg-blue-900">
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-900/80 to-black/70 z-10"></div>
-              <img 
-                src="/car-register.jpg" 
-                alt="Sports Car" 
+              <img
+                src="/car-register.jpg"
+                alt="Sports Car"
                 className="absolute inset-0 w-full h-full object-cover"
                 onError={(e) => {
                   e.target.src = "https://images.unsplash.com/photo-1583121274602-3e2820c69888?ixlib=rb-4.0.3";
@@ -125,34 +175,34 @@ export default function Registrar() {
               </motion.div>
             </div>
           </div>
-          
+
           {/* Lado direito - Formulário */}
           <div className="p-8 md:p-12 overflow-y-auto max-h-[700px]">
             <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900">Criar conta</h1>
               <p className="mt-2 text-gray-600">Preenche os dados para te juntares à Zentorno</p>
             </div>
-            
+
             <div className="space-y-6">
-              {/* Botões de login social */}
+              {/* Botão de login social */}
               <div className="mb-6">
-              <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M21.8055 10.0415H21V10H12V14H17.6515C16.827 16.3285 14.6115 18 12 18C8.6865 18 6 15.3135 6 12C6 8.6865 8.6865 6 12 6C13.5295 6 14.921 6.577 15.9805 7.5195L18.809 4.691C17.023 3.0265 14.634 2 12 2C6.4775 2 2 6.4775 2 12C2 17.5225 6.4775 22 12 22C17.5225 22 22 17.5225 22 12C22 11.3295 21.931 10.675 21.8055 10.0415Z"
-                    fill="#FFC107"                  />
-                  <path d="M3.15302 7.3455L6.43851 9.755C7.32752 7.554 9.48052 6 12 6C13.5295 6 14.921 6.577 15.9805 7.5195L18.809 4.691C17.023 3.0265 14.634 2 12 2C8.15902 2 4.82801 4.1685 3.15302 7.3455Z"
-                    fill="#FF3D00"                  />
-                  <path                    d="M12 22C14.583 22 16.93 21.0115 18.7045 19.404L15.6095 16.785C14.5718 17.5742 13.3038 18.001 12 18C9.39897 18 7.19047 16.3415 6.35847 14.027L3.09747 16.5395C4.75247 19.778 8.11347 22 12 22Z"
-                    fill="#4CAF50"                  />
-                  <path                    d="M21.8055 10.0415H21V10H12V14H17.6515C17.2571 15.1082 16.5467 16.0766 15.608 16.7855L15.6095 16.7845L18.7045 19.4035C18.4855 19.6025 22 17 22 12C22 11.3295 21.931 10.675 21.8055 10.0415Z"
-                    fill="#1976D2"                  />
-                </svg>
-                <span className="text-gray-700">Google</span>
-              </button>
-            </div>
-               
-              
+                <button className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M21.8055 10.0415H21V10H12V14H17.6515C16.827 16.3285 14.6115 18 12 18C8.6865 18 6 15.3135 6 12C6 8.6865 8.6865 6 12 6C13.5295 6 14.921 6.577 15.9805 7.5195L18.809 4.691C17.023 3.0265 14.634 2 12 2C6.4775 2 2 6.4775 2 12C2 17.5225 6.4775 22 12 22C17.5225 22 22 17.5225 22 12C22 11.3295 21.931 10.675 21.8055 10.0415Z"
+                      fill="#FFC107" />
+                    <path d="M3.15302 7.3455L6.43851 9.755C7.32752 7.554 9.48052 6 12 6C13.5295 6 14.921 6.577 15.9805 7.5195L18.809 4.691C17.023 3.0265 14.634 2 12 2C8.15902 2 4.82801 4.1685 3.15302 7.3455Z"
+                      fill="#FF3D00" />
+                    <path d="M12 22C14.583 22 16.93 21.0115 18.7045 19.404L15.6095 16.785C14.5718 17.5742 13.3038 18.001 12 18C9.39897 18 7.19047 16.3415 6.35847 14.027L3.09747 16.5395C4.75247 19.778 8.11347 22 12 22Z"
+                      fill="#4CAF50" />
+                    <path d="M21.8055 10.0415H21V10H12V14H17.6515C17.2571 15.1082 16.5467 16.0766 15.608 16.7855L15.6095 16.7845L18.7045 19.4035C18.4855 19.6025 22 17 22 12C22 11.3295 21.931 10.675 21.8055 10.0415Z"
+                      fill="#1976D2" />
+                  </svg>
+                  <span className="text-gray-700">Google</span>
+                </button>
+              </div>
+
+
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-300"></div>
@@ -161,14 +211,20 @@ export default function Registrar() {
                   <span className="px-2 bg-white text-gray-500">Ou regista-te com</span>
                 </div>
               </div>
-              
+
+              {/* Mensagem de erro geral do Firebase */}
+              {registrationError && (
+                <p className="text-red-600 text-center mb-4">{registrationError}</p>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Campo Nome completo */}
                 <div>
                   <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
                     Nome completo
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="nome"
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
@@ -179,13 +235,14 @@ export default function Registrar() {
                     <p className="mt-1 text-sm text-red-600">{formErrors.nome}</p>
                   )}
                 </div>
-                
+
+                {/* Campo Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                     Email
                   </label>
-                  <input 
-                    type="email" 
+                  <input
+                    type="email"
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -196,13 +253,14 @@ export default function Registrar() {
                     <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
                   )}
                 </div>
-                
+
+                {/* Campo Senha */}
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                     Senha
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       type={showPassword ? "text" : "password"}
                       id="password"
                       value={password}
@@ -210,7 +268,7 @@ export default function Registrar() {
                       className={`w-full px-4 py-3 rounded-lg border ${formErrors.password ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pr-10`}
                       placeholder="Cria uma senha"
                     />
-                    <button 
+                    <button
                       type="button"
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       onClick={() => setShowPassword(!showPassword)}
@@ -227,13 +285,14 @@ export default function Registrar() {
                   )}
                   <p className="mt-1 text-xs text-gray-500">Mínimo 6 caracteres, use letras e números para maior segurança</p>
                 </div>
-                
+
+                {/* Campo Confirmar senha */}
                 <div>
                   <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                     Confirmar senha
                   </label>
                   <div className="relative">
-                    <input 
+                    <input
                       type={showConfirmPassword ? "text" : "password"}
                       id="confirmPassword"
                       value={confirmPassword}
@@ -241,7 +300,7 @@ export default function Registrar() {
                       className={`w-full px-4 py-3 rounded-lg border ${formErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pr-10`}
                       placeholder="Confirma a tua senha"
                     />
-                    <button 
+                    <button
                       type="button"
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -257,7 +316,8 @@ export default function Registrar() {
                     <p className="mt-1 text-sm text-red-600">{formErrors.confirmPassword}</p>
                   )}
                 </div>
-                
+
+                {/* Checkbox de termos e condições */}
                 <div className="flex items-start">
                   <div className="flex items-center h-5">
                     <input
@@ -277,13 +337,14 @@ export default function Registrar() {
                     )}
                   </div>
                 </div>
-                
-                <button 
+
+                {/* Botão de submissão do formulário */}
+                <button
                   type="submit"
                   disabled={loading}
                   className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all ${
-                    loading 
-                      ? 'bg-blue-400 cursor-not-allowed' 
+                    loading
+                      ? 'bg-blue-400 cursor-not-allowed'
                       : 'bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-200'
                   }`}
                 >
@@ -298,7 +359,8 @@ export default function Registrar() {
                   ) : 'Criar conta'}
                 </button>
               </form>
-              
+
+              {/* Link para a página de login */}
               <div className="mt-6 text-center">
                 <p className="text-gray-600">
                   Já tens uma conta?{' '}

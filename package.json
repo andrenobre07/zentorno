@@ -9,11 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "firebase": "^11.6.0",
-    "framer-motion": "^12.6.2",
+    "firebase": "^11.9.0",
+    "framer-motion": "^12.16.0",
     "lucide-react": "^0.486.0",
     "modules": "^0.4.0",
-    "next": "15.1.6",
+    "next": "^15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

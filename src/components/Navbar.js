@@ -1,17 +1,22 @@
+// components/Navbar.js
 "use client";
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Car, User, Home, Search, Menu, X } from "lucide-react";
+import { useRouter } from "next/router"; // Importar useRouter de 'next/router' para Pages Router
+import { Car, User, Home, Search, Menu, X, LogOut } from "lucide-react"; // Adicionado LogOut
+import { useAuth } from '../context/AuthContext'; // Importa o hook de autenticação
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const router = useRouter();
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const [searchOpen, setSearchOpen] = useState(false); // Mantido o estado, embora não usado no seu código
+  const router = useRouter(); // Inicializa o useRouter
+  const pathname = router.pathname; // Obtém o pathname do useRouter
   const isHome = pathname === "/";
+
+  // Desestrutura os valores do contexto de autenticação
+  const { currentUser, loading, logout } = useAuth();
 
   // Efeito para detectar scroll
   useEffect(() => {
@@ -27,6 +32,13 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Função para lidar com o logout
+  const handleLogout = async () => {
+    await logout(); // Chama a função logout do contexto
+    router.push('/login'); // Redireciona para a página de login após o logout
+    setIsMenuOpen(false); // Fecha o menu mobile após logout
+  };
+
   return (
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
       scrolled || !isHome ? "bg-black bg-opacity-90 backdrop-blur-sm shadow-lg shadow-blue-900/20" : "bg-transparent"
@@ -36,16 +48,15 @@ export default function Navbar() {
         <div className="flex items-center">
           <Link href="/" className="flex items-center group">
             <div className="relative h-12 w-12 mr-3 overflow-hidden">
-              <img 
-                src="/logo.png" 
-                alt="Logo Zentorno" 
-                className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110" 
+              <img
+                src="/logo.png"
+                alt="Logo Zentorno"
+                className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full"></div>
             </div>
             <div className="flex flex-col">
               <span className="text-white font-bold text-xl tracking-wide group-hover:text-blue-400 transition-colors duration-300">ZENTORNO</span>
-           
             </div>
           </Link>
         </div>
@@ -66,22 +77,49 @@ export default function Navbar() {
             <Car size={16} className="mr-1" />
             <span>Catálogo</span>
           </Link>
-          
-          <Link href="/login"
-            className={`text-white text-sm flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 transition-all duration-300 px-4 py-2 rounded-md shadow-md shadow-blue-900/30 hover:shadow-blue-500/30 ${
-              pathname === '/login' ? 'ring-2 ring-blue-400' : ''
-            }`}>
-            <User size={16} className="mr-1" />
-            <span>Login</span>
-          </Link>
-          
-          
+
+          {/* Condicional para o botão de Login/Utilizador */}
+          {loading ? (
+            <span className="text-white text-sm">A carregar...</span>
+          ) : currentUser ? (
+            <div className="flex items-center space-x-3">
+              <Link href="/utilizadores"
+                className="text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 px-2 py-1 flex items-center"
+                title="Ver Utilizadores Registados" // Adiciona um título para acessibilidade
+              >
+                <User size={16} className="mr-1" />
+                <span>{currentUser.name || currentUser.email.split('@')[0]}</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors duration-300 shadow-md"
+                title="Sair da conta"
+              >
+                <LogOut size={20} />
+              </button>
+            </div>
+          ) : (
+            // Se não estiver logado, exibe os botões de Login e Registar
+            <>
+              <Link href="/login"
+                className={`text-white text-sm flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 transition-all duration-300 px-4 py-2 rounded-md shadow-md shadow-blue-900/30 hover:shadow-blue-500/30 ${
+                  pathname === '/login' ? 'ring-2 ring-blue-400' : ''
+                }`}>
+                <User size={16} className="mr-1" />
+                <span>Login</span>
+              </Link>
+              <Link href="/registrar"
+                className="text-white text-sm flex items-center justify-center bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 transition-all duration-300 px-4 py-2 rounded-md shadow-md shadow-green-900/30 hover:shadow-green-500/30">
+                <span>Registar</span>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Botão para mobile animado */}
         <div className="md:hidden">
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)} 
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="text-white focus:outline-none p-2 rounded-md hover:bg-blue-900/30 transition-colors duration-300"
           >
             {isMenuOpen ? (
@@ -98,7 +136,7 @@ export default function Navbar() {
         isMenuOpen ? 'max-h-80 opacity-100 shadow-xl shadow-blue-900/20' : 'max-h-0 opacity-0 overflow-hidden'
       }`}>
         <div className="px-4 py-2">
-          <Link href="/" 
+          <Link href="/"
             className={`flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
               pathname === '/' ? 'text-blue-400' : ''
             }`}
@@ -107,7 +145,7 @@ export default function Navbar() {
             <Home size={18} className="mr-2" />
             <span>Home</span>
           </Link>
-          <Link href="/comprar" 
+          <Link href="/comprar"
             className={`flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
               pathname === '/comprar' ? 'text-blue-400' : ''
             }`}
@@ -116,17 +154,48 @@ export default function Navbar() {
             <Car size={18} className="mr-2" />
             <span>Catálogo</span>
           </Link>
-          
-          <Link href="/login" 
-            className={`flex items-center py-3 mt-2 text-white hover:text-blue-400 ${
-              pathname === '/login' ? 'text-blue-400' : ''
-            }`}
-            onClick={() => setIsMenuOpen(false)}
-          >
-            <User size={18} className="mr-2" />
-            <span>Login</span>
-          </Link>
-         
+
+          {/* Condicional para o menu mobile */}
+          {loading ? (
+            <span className="flex items-center py-3 text-white">A carregar...</span>
+          ) : currentUser ? (
+            <>
+              <Link href="/utilizadores"
+                className={`flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
+                  pathname === '/utilizadores' ? 'text-blue-400' : ''
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <User size={18} className="mr-2" />
+                <span>{currentUser.name || currentUser.email.split('@')[0]}</span>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center py-3 text-red-400 hover:text-red-500 w-full text-left"
+              >
+                <LogOut size={18} className="mr-2" />
+                <span>Sair</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login"
+                className={`flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
+                  pathname === '/login' ? 'text-blue-400' : ''
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <User size={18} className="mr-2" />
+                <span>Login</span>
+              </Link>
+              <Link href="/registrar"
+                className="flex items-center py-3 mt-2 text-white hover:text-blue-400"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span>Registar</span>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
