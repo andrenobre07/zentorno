@@ -3,37 +3,34 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import { motion } from "framer-motion";
-import { collection, getDocs, query, orderBy } from "firebase/firestore"; // Import query and orderBy
-import { db } from "../lib/firebaseConfig"; // Import db
-import { Loader } from 'lucide-react'; // Import Loader icon
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { db } from "../lib/firebaseConfig";
+import { Loader } from 'lucide-react';
 
 export default function Comprar() {
   const [filtro, setFiltro] = useState("todos");
-  const [precoMaximo, setPrecoMaximo] = useState(200000); // Preço máximo inicial para um bom range
+  const [precoMaximo, setPrecoMaximo] = useState(200000);
   const [carros, setCarros] = useState([]);
   const [loadingCars, setLoadingCars] = useState(true);
   const [errorLoadingCars, setErrorLoadingCars] = useState(null);
-
   const [carrosFiltrados, setCarrosFiltrados] = useState([]);
 
-  // Fetch cars from Firestore
   useEffect(() => {
     const fetchCars = async () => {
       try {
         setLoadingCars(true);
         setErrorLoadingCars(null);
         const carsCollectionRef = collection(db, "cars");
-        const q = query(carsCollectionRef, orderBy("createdAt", "desc")); // Order by creation date
+        const q = query(carsCollectionRef, orderBy("createdAt", "desc"));
         const querySnapshot = await getDocs(q);
         const carsList = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
         setCarros(carsList);
-        // Atualiza o preço máximo para ser no mínimo o preço do carro mais caro, se houver
         if (carsList.length > 0) {
           const maxPrice = Math.max(...carsList.map(car => car.preco));
-          setPrecoMaximo(maxPrice > 200000 ? maxPrice + 10000 : 200000); // Ajusta o max slider
+          setPrecoMaximo(maxPrice > 200000 ? maxPrice + 10000 : 200000);
         }
       } catch (err) {
         console.error("Erro ao buscar carros do Firestore:", err);
@@ -42,9 +39,8 @@ export default function Comprar() {
         setLoadingCars(false);
       }
     };
-
     fetchCars();
-  }, []); // Run once on component mount
+  }, []);
 
   useEffect(() => {
     const resultado = carros.filter(carro => {
@@ -58,7 +54,6 @@ export default function Comprar() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
-
       <div className="relative h-80 bg-gradient-to-r from-blue-800 to-blue-600 mb-8">
         <div className="absolute inset-0 bg-black opacity-30"></div>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -68,7 +63,6 @@ export default function Comprar() {
           </div>
         </div>
       </div>
-
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           {/* Filtros */}
@@ -93,7 +87,6 @@ export default function Comprar() {
                   ))}
                 </div>
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Preço máximo: €{precoMaximo.toLocaleString()}
@@ -101,7 +94,7 @@ export default function Comprar() {
                 <input
                   type="range"
                   min="0"
-                  max="500000" // Ajustado para ser suficientemente alto
+                  max="500000"
                   step="1000"
                   value={precoMaximo}
                   onChange={(e) => setPrecoMaximo(Number(e.target.value))}
@@ -114,7 +107,6 @@ export default function Comprar() {
               </div>
             </div>
           </div>
-
           {/* Resultados */}
           <div className="mb-6 flex justify-between items-center">
             <h2 className="text-2xl font-bold">{carrosFiltrados.length} Veículos Encontrados</h2>
@@ -128,20 +120,17 @@ export default function Comprar() {
               </select>
             </div>
           </div>
-
           {loadingCars && (
             <div className="text-center py-12 flex flex-col items-center">
               <Loader size={48} className="animate-spin text-blue-600 mb-4" />
               <p className="text-gray-700">A carregar carros...</p>
             </div>
           )}
-
           {errorLoadingCars && (
             <div className="text-center py-12">
               <p className="text-red-600">{errorLoadingCars}</p>
             </div>
           )}
-
           {!loadingCars && !errorLoadingCars && carrosFiltrados.length === 0 ? (
             <div className="text-center py-12">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -168,11 +157,9 @@ export default function Comprar() {
                       €{carro.preco.toLocaleString()}
                     </div>
                   </div>
-
                   <div className="p-6">
                     <h3 className="text-xl font-bold mb-2">{carro.nome}</h3>
                     <p className="text-gray-600 mb-4">{carro.descricao}</p>
-
                     <div className="flex flex-wrap gap-2 mb-6">
                       <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs">
                         {carro.categoria.charAt(0).toUpperCase() + carro.categoria.slice(1)}
@@ -182,26 +169,21 @@ export default function Comprar() {
                       </span>
                     </div>
 
+                    {/* AQUI ESTÁ A ÚNICA ALTERAÇÃO: O BOTÃO DE CORAÇÃO FOI REMOVIDO */}
                     <div className="flex gap-4">
-                      {/* Link dinâmico para a página de detalhe do carro */}
                       <Link href={`/car/${carro.id}`} className="flex-1">
                         <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-colors">
                           Ver Detalhes
                         </button>
                       </Link>
-                      <button className="w-12 h-12 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-gray-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                        </svg>
-                      </button>
                     </div>
+                    
                   </div>
                 </motion.div>
               ))}
             </div>
           )}
-
-          {/* Paginação (mantido o placeholder, a funcionalidade real de paginação seria mais complexa com Firestore) */}
+          {/* Paginação */}
           <div className="mt-12 flex justify-center">
             <nav className="inline-flex rounded-md shadow">
               <a href="#" className="py-2 px-4 bg-white border border-gray-300 text-gray-500 hover:bg-gray-50 rounded-l-md">
