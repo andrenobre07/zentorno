@@ -1,24 +1,22 @@
-// components/Navbar.js
+// src/components/Navbar.js
 "use client";
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router"; // Importar useRouter de 'next/router' para Pages Router
-import { Car, User, Home, Search, Menu, X, LogOut } from "lucide-react"; // Adicionado LogOut
-import { useAuth } from '../context/AuthContext'; // Importa o hook de autenticação
+import { useRouter } from "next/router";
+import { Car, User, Home, Search, Menu, X, LogOut, Settings } from "lucide-react"; // Adicionado Settings
+import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false); // Mantido o estado, embora não usado no seu código
-  const router = useRouter(); // Inicializa o useRouter
-  const pathname = router.pathname; // Obtém o pathname do useRouter
+  const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
+  const pathname = router.pathname;
   const isHome = pathname === "/";
 
-  // Desestrutura os valores do contexto de autenticação
   const { currentUser, loading, logout } = useAuth();
 
-  // Efeito para detectar scroll
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
@@ -32,11 +30,10 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Função para lidar com o logout
   const handleLogout = async () => {
-    await logout(); // Chama a função logout do contexto
-    router.push('/login'); // Redireciona para a página de login após o logout
-    setIsMenuOpen(false); // Fecha o menu mobile após logout
+    await logout();
+    router.push('/login');
+    setIsMenuOpen(false);
   };
 
   return (
@@ -78,14 +75,27 @@ export default function Navbar() {
             <span>Catálogo</span>
           </Link>
 
+          {/* Botão do Painel de Administrador (visível apenas para admins) */}
+          {!loading && currentUser && currentUser.isAdmin && (
+            <Link href="/admin"
+              className={`text-white text-sm uppercase tracking-widest font-medium hover:text-purple-400 transition-colors duration-300 px-2 py-1 flex items-center ${
+                pathname.startsWith('/admin') ? 'text-purple-400 relative after:absolute after:bottom-0 after:left-0 after:bg-purple-500 after:h-0.5 after:w-full' : ''
+              }`}
+              title="Painel de Administrador"
+            >
+              <Settings size={16} className="mr-1" />
+              <span>Admin</span>
+            </Link>
+          )}
+
           {/* Condicional para o botão de Login/Utilizador */}
           {loading ? (
             <span className="text-white text-sm">A carregar...</span>
           ) : currentUser ? (
             <div className="flex items-center space-x-3">
-              <Link href="/utilizadores"
+              <Link href="/admin/utilizadores" // Agora aponta para a página de admin
                 className="text-white text-sm uppercase tracking-widest font-medium hover:text-blue-400 transition-colors duration-300 px-2 py-1 flex items-center"
-                title="Ver Utilizadores Registados" // Adiciona um título para acessibilidade
+                title={`Ver perfil de ${currentUser.name || currentUser.email.split('@')[0]}`}
               >
                 <User size={16} className="mr-1" />
                 <span>{currentUser.name || currentUser.email.split('@')[0]}</span>
@@ -99,7 +109,6 @@ export default function Navbar() {
               </button>
             </div>
           ) : (
-            // Se não estiver logado, exibe os botões de Login e Registar
             <>
               <Link href="/login"
                 className={`text-white text-sm flex items-center justify-center bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 transition-all duration-300 px-4 py-2 rounded-md shadow-md shadow-blue-900/30 hover:shadow-blue-500/30 ${
@@ -155,14 +164,27 @@ export default function Navbar() {
             <span>Catálogo</span>
           </Link>
 
+          {/* Admin button for mobile */}
+          {!loading && currentUser && currentUser.isAdmin && (
+            <Link href="/admin"
+              className={`flex items-center py-3 text-white hover:text-purple-400 border-b border-gray-800 ${
+                pathname.startsWith('/admin') ? 'text-purple-400' : ''
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Settings size={18} className="mr-2" />
+              <span>Painel Admin</span>
+            </Link>
+          )}
+
           {/* Condicional para o menu mobile */}
           {loading ? (
             <span className="flex items-center py-3 text-white">A carregar...</span>
           ) : currentUser ? (
             <>
-              <Link href="/utilizadores"
+              <Link href="/admin/utilizadores" // Aponta para a página de admin
                 className={`flex items-center py-3 text-white hover:text-blue-400 border-b border-gray-800 ${
-                  pathname === '/utilizadores' ? 'text-blue-400' : ''
+                  pathname === '/admin/utilizadores' ? 'text-blue-400' : ''
                 }`}
                 onClick={() => setIsMenuOpen(false)}
               >
