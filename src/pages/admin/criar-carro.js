@@ -168,7 +168,7 @@ export default function CreateCar() {
                     <option value="eletrico">Elétrico</option>
                     <option value="hatchback">Hatchback</option>
                     <option value="picape">Picape</option>
-                    <option value="esportivo">Esportivo</option>
+                    <option value="desportivo">Desportivo</option>
                   </select>
                 </div>
 

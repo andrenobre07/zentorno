@@ -72,7 +72,7 @@ export default function Comprar() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
                 <div className="flex flex-wrap gap-2">
-                  {["todos", "eletrico", "sedan", "suv", "hatchback", "picape", "esportivo"].map((tipo) => (
+                  {["todos", "eletrico", "sedan", "suv", "hatchback", "picape", "desportivo"].map((tipo) => (
                     <button
                       key={tipo}
                       onClick={() => setFiltro(tipo)}

@@ -43,7 +43,7 @@ export default function Carro2() {
         id: "sport", 
         name: "Sport Pack", 
         price: 4500,
-        features: ["Suspensão esportiva", "Volante esportivo", "Pedais em alumínio"]
+        features: ["Suspensão esportiva", "Volante desportivo", "Pedais em alumínio"]
       }
     ],
     features: [

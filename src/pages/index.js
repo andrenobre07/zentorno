@@ -20,7 +20,7 @@ export default function Home() {
       accelerationScore: "85%",
       topSpeed: "330 km/h",
       speedScore: "90%",
-      category: "Superesportivo"
+      category: "Superdesportivo"
     },
 
     // Outros carros aqui...
@@ -33,7 +33,7 @@ export default function Home() {
       accelerationScore: "95%",
       topSpeed: "280 km/h",
       speedScore: "75%",
-      category: "Superesportivo"
+      category: "Superdesportivo"
     },
   ];
 
@@ -245,7 +245,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row items-center">
             <div className="md:w-1/2 mb-10 md:mb-0">
               <div className="relative">
-                <img src="/showroom.jpg" alt="Nossa Garagem" className="rounded-lg shadow-2xl" />
+                <img src="/showroom.jpg" alt="A Nossa Garagem" className="rounded-lg shadow-2xl" />
                 <div className="absolute -bottom-6 -right-6 bg-blue-600 text-white p-4 rounded-lg shadow-lg">
                   <span className="text-3xl font-bold">10</span>
                   <span className="block">Anos de Excelência</span>
