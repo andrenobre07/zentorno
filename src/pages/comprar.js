@@ -94,7 +94,7 @@ export default function Comprar() {
                 <input
                   type="range"
                   min="0"
-                  max="500000"
+                  max="50000000"
                   step="1000"
                   value={precoMaximo}
                   onChange={(e) => setPrecoMaximo(Number(e.target.value))}
@@ -102,7 +102,7 @@ export default function Comprar() {
                 />
                 <div className="flex justify-between text-xs text-gray-500 mt-1">
                   <span>€0</span>
-                  <span>€500.000+</span>
+                  <span>€50.000.000+</span>
                 </div>
               </div>
             </div>
