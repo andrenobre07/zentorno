@@ -27,14 +27,12 @@ export default function CreateCar() {
   const [colors, setColors] = useState([{ name: "", price: 0, hex: "#000000" }]);
   const [interiors, setInteriors] = useState([{ name: "", price: 0 }]);
   const [packages, setPackages] = useState([{ name: "", price: 0, features: "" }]);
+  const [isFeatured, setIsFeatured] = useState(false);
+
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [formSuccess, setFormSuccess] = useState(false);
-
-  // --- NOVO ESTADO ADICIONADO ---
-  const [isFeatured, setIsFeatured] = useState(false);
-
-  // Seus useEffects e Handlers originais
+  
   useEffect(() => {
     if (imageUrl.startsWith("data:image")) {
       setImageUrlError("URL inválido. Por favor, insira um link para uma imagem (https://...) e não uma imagem em Base64.");
@@ -46,7 +44,6 @@ export default function CreateCar() {
   useEffect(() => {
     if (!authLoading && (!currentUser || !currentUser.isAdmin)) {
       router.push("/");
-      alert("Acesso negado. Apenas administradores podem aceder a esta página.");
     }
   }, [currentUser, authLoading, router]);
   
@@ -73,12 +70,6 @@ export default function CreateCar() {
       return;
     }
 
-    if (!carName || !basePrice || !imageUrl) {
-      setFormError("Nome, Preço Base e URL da Imagem são obrigatórios.");
-      setFormLoading(false);
-      return;
-    }
-
     try {
       const carData = {
         nome: carName,
@@ -94,25 +85,26 @@ export default function CreateCar() {
         consumo: fuelConsumption,
         features: features.split('\n').filter(f => f.trim() !== ''),
         colors: colors.map(c => ({ ...c, price: parseFloat(c.price) || 0 })),
-        interiors: interiors.map(i => ({ ...c, price: parseFloat(i.price) || 0 })),
+        // --- A CORREÇÃO ESTÁ NESTA LINHA ---
+        interiors: interiors.map(i => ({ ...i, price: parseFloat(i.price) || 0 })),
         packages: packages.map(p => ({
           ...p,
           price: parseFloat(p.price) || 0,
           features: p.features.split('\n').filter(f => f.trim() !== '')
         })),
         createdAt: new Date().toISOString(),
-        isFeatured: isFeatured, // --- NOVO CAMPO ADICIONADO ---
+        isFeatured: isFeatured,
       };
       
       await addDoc(collection(db, "cars"), carData);
 
       setFormSuccess(true);
       alert("Carro adicionado com sucesso ao catálogo!");
-      router.push('/comprar');
+      router.push('/admin/gerir-carros');
 
     } catch (err) {
       console.error("Erro ao adicionar carro:", err);
-      setFormError(`Erro ao adicionar o carro: ${err.message}. Verifique as permissões no Firebase.`);
+      setFormError(`Erro ao adicionar o carro: ${err.message}`);
     } finally {
       setFormLoading(false);
     }
@@ -168,40 +160,32 @@ export default function CreateCar() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem Principal</label>
-                  <input 
-                    type="url" 
-                    id="imageUrl" 
-                    value={imageUrl} 
-                    onChange={(e) => setImageUrl(e.target.value)} 
-                    className={`w-full px-4 py-2 rounded-lg border ${imageUrlError ? 'border-red-500' : 'border-gray-300'}`}
-                    placeholder="https://exemplo.com/carro.jpg" 
-                    required 
-                  />
-                  {imageUrlError && (
-                    <div className="mt-2 flex items-center text-red-600 text-sm">
-                      <AlertTriangle className="w-4 h-4 mr-2" />
-                      {imageUrlError}
-                    </div>
-                  )}
-                  {imageUrl && !imageUrlError && <img src={imageUrl} alt="Preview" className="mt-4 w-full h-auto object-contain max-h-64 rounded-lg border p-2" />}
+                    <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem Principal</label>
+                    <input 
+                      type="url" 
+                      id="imageUrl" 
+                      value={imageUrl} 
+                      onChange={(e) => setImageUrl(e.target.value)} 
+                      className={`w-full px-4 py-2 rounded-lg border ${imageUrlError ? 'border-red-500' : 'border-gray-300'}`}
+                      placeholder="https://exemplo.com/carro.jpg" 
+                      required 
+                    />
+                    {imageUrlError && (
+                      <div className="mt-2 flex items-center text-red-600 text-sm">
+                        <AlertTriangle className="w-4 h-4 mr-2" />
+                        {imageUrlError}
+                      </div>
+                    )}
+                    {imageUrl && !imageUrlError && <img src={imageUrl} alt="Preview" className="mt-4 w-full h-auto object-contain max-h-64 rounded-lg border p-2" />}
                 </div>
               </div>
-              
-              {/* --- CHECKBOX ADICIONADO --- */}
               <div className="mt-6 pt-6 border-t">
                 <label className="flex items-center space-x-3 cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
+                  <input type="checkbox" checked={isFeatured} onChange={(e) => setIsFeatured(e.target.checked)} className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
                   <span className="text-gray-700 font-medium">Marcar como Destaque na Página Principal</span>
                 </label>
               </div>
             </div>
-            
             <div className="p-6 border rounded-lg">
                 <h2 className="text-xl font-semibold mb-4 text-gray-800">Especificações Técnicas</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,12 +211,10 @@ export default function CreateCar() {
                     </div>
                 </div>
             </div>
-
             <div className="p-6 border rounded-lg">
                 <h2 className="text-xl font-semibold mb-4 text-gray-800">Equipamento de Série</h2>
                 <textarea id="features" value={features} onChange={(e) => setFeatures(e.target.value)} rows="5" className="w-full px-4 py-2 rounded-lg border-gray-300" placeholder="Digite cada item numa nova linha..."></textarea>
             </div>
-            
             <div className="space-y-6">
                 <div className="p-6 border rounded-lg">
                     <h2 className="text-xl font-semibold mb-4 text-gray-800">Cores Disponíveis</h2>
