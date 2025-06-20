@@ -10,16 +10,14 @@ export default function CreateCar() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // State for basic car info
+  // Seus estados originais
   const [carName, setCarName] = useState("");
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [category, setCategory] = useState("sedan");
   const [imageUrl, setImageUrl] = useState("");
-  const [imageUrlError, setImageUrlError] = useState(""); // Novo estado para erro de URL
-
-  // ... (outros estados permanecem iguais) ...
+  const [imageUrlError, setImageUrlError] = useState("");
   const [engine, setEngine] = useState("");
   const [power, setPower] = useState("");
   const [acceleration, setAcceleration] = useState("");
@@ -33,8 +31,10 @@ export default function CreateCar() {
   const [formError, setFormError] = useState(null);
   const [formSuccess, setFormSuccess] = useState(false);
 
+  // --- NOVO ESTADO ADICIONADO ---
+  const [isFeatured, setIsFeatured] = useState(false);
 
-  // Efeito para validar o URL da imagem em tempo real
+  // Seus useEffects e Handlers originais
   useEffect(() => {
     if (imageUrl.startsWith("data:image")) {
       setImageUrlError("URL inválido. Por favor, insira um link para uma imagem (https://...) e não uma imagem em Base64.");
@@ -43,7 +43,6 @@ export default function CreateCar() {
     }
   }, [imageUrl]);
 
-  // Redirect if not admin (código igual)
   useEffect(() => {
     if (!authLoading && (!currentUser || !currentUser.isAdmin)) {
       router.push("/");
@@ -51,7 +50,6 @@ export default function CreateCar() {
     }
   }, [currentUser, authLoading, router]);
   
-  // Handlers (código igual)
   const handleAddField = (setter, field) => setter(prev => [...prev, field]);
   const handleRemoveField = (setter, index) => setter(prev => prev.filter((_, i) => i !== index));
   const handleFieldChange = (setter, index, event) => {
@@ -69,7 +67,6 @@ export default function CreateCar() {
     setFormError(null);
     setFormSuccess(false);
 
-    // Validação adicional antes de submeter
     if (imageUrlError) {
       setFormError("Por favor, corrija o URL da imagem antes de continuar.");
       setFormLoading(false);
@@ -104,6 +101,7 @@ export default function CreateCar() {
           features: p.features.split('\n').filter(f => f.trim() !== '')
         })),
         createdAt: new Date().toISOString(),
+        isFeatured: isFeatured, // --- NOVO CAMPO ADICIONADO ---
       };
       
       await addDoc(collection(db, "cars"), carData);
@@ -119,8 +117,8 @@ export default function CreateCar() {
       setFormLoading(false);
     }
   };
-  
-    if (authLoading || !currentUser || !currentUser.isAdmin) {
+ 
+  if (authLoading || !currentUser || !currentUser.isAdmin) {
     return (
       <main className="min-h-screen bg-gray-100 flex items-center justify-center">
         <p className="text-gray-700 text-lg">Verificando permissões...</p>
@@ -128,7 +126,6 @@ export default function CreateCar() {
     );
   }
 
-  // O resto do seu JSX com a alteração no campo da imagem
   return (
     <main className="min-h-screen bg-gray-100 pt-24 pb-12">
       <Navbar />
@@ -143,16 +140,15 @@ export default function CreateCar() {
             <div className="p-6 border rounded-lg">
               <h2 className="text-xl font-semibold mb-4 text-gray-800">Informações Básicas</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* ... outros campos ... */}
-                 <div>
+                <div>
                   <label htmlFor="carName" className="block text-sm font-medium text-gray-700 mb-1">Nome do Carro</label>
                   <input type="text" id="carName" value={carName} onChange={(e) => setCarName(e.target.value)} className="w-full px-4 py-2 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: Zentorno GT" required />
                 </div>
-                 <div>
+                <div>
                   <label htmlFor="tagline" className="block text-sm font-medium text-gray-700 mb-1">Slogan</label>
                   <input type="text" id="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} className="w-full px-4 py-2 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: A velocidade encontra a arte" />
                 </div>
-                 <div className="md:col-span-2">
+                <div className="md:col-span-2">
                   <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
                   <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} rows="3" className="w-full px-4 py-2 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Uma breve descrição do carro..." required></textarea>
                 </div>
@@ -171,29 +167,41 @@ export default function CreateCar() {
                     <option value="desportivo">Desportivo</option>
                   </select>
                 </div>
-
                 <div className="md:col-span-2">
-                    <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem Principal</label>
-                    <input 
-                      type="url" 
-                      id="imageUrl" 
-                      value={imageUrl} 
-                      onChange={(e) => setImageUrl(e.target.value)} 
-                      className={`w-full px-4 py-2 rounded-lg border ${imageUrlError ? 'border-red-500' : 'border-gray-300'}`}
-                      placeholder="https://exemplo.com/carro.jpg" 
-                      required 
-                    />
-                    {imageUrlError && (
-                      <div className="mt-2 flex items-center text-red-600 text-sm">
-                        <AlertTriangle className="w-4 h-4 mr-2" />
-                        {imageUrlError}
-                      </div>
-                    )}
-                    {imageUrl && !imageUrlError && <img src={imageUrl} alt="Preview" className="mt-4 w-full h-auto object-contain max-h-64 rounded-lg border p-2" />}
+                  <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">URL da Imagem Principal</label>
+                  <input 
+                    type="url" 
+                    id="imageUrl" 
+                    value={imageUrl} 
+                    onChange={(e) => setImageUrl(e.target.value)} 
+                    className={`w-full px-4 py-2 rounded-lg border ${imageUrlError ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="https://exemplo.com/carro.jpg" 
+                    required 
+                  />
+                  {imageUrlError && (
+                    <div className="mt-2 flex items-center text-red-600 text-sm">
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      {imageUrlError}
+                    </div>
+                  )}
+                  {imageUrl && !imageUrlError && <img src={imageUrl} alt="Preview" className="mt-4 w-full h-auto object-contain max-h-64 rounded-lg border p-2" />}
                 </div>
               </div>
+              
+              {/* --- CHECKBOX ADICIONADO --- */}
+              <div className="mt-6 pt-6 border-t">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                    className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <span className="text-gray-700 font-medium">Marcar como Destaque na Página Principal</span>
+                </label>
+              </div>
             </div>
-            {/* ... resto do formulário (especificações, cores, etc.) ... */}
+            
             <div className="p-6 border rounded-lg">
                 <h2 className="text-xl font-semibold mb-4 text-gray-800">Especificações Técnicas</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -220,15 +228,12 @@ export default function CreateCar() {
                 </div>
             </div>
 
-            {/* Equipamento de Série */}
             <div className="p-6 border rounded-lg">
                 <h2 className="text-xl font-semibold mb-4 text-gray-800">Equipamento de Série</h2>
                 <textarea id="features" value={features} onChange={(e) => setFeatures(e.target.value)} rows="5" className="w-full px-4 py-2 rounded-lg border-gray-300" placeholder="Digite cada item numa nova linha..."></textarea>
             </div>
             
-            {/* Cores, Interiores e Pacotes */}
             <div className="space-y-6">
-                {/* Cores */}
                 <div className="p-6 border rounded-lg">
                     <h2 className="text-xl font-semibold mb-4 text-gray-800">Cores Disponíveis</h2>
                     {colors.map((color, index) => (
@@ -243,8 +248,6 @@ export default function CreateCar() {
                     ))}
                     <button type="button" onClick={() => handleAddField(setColors, { name: '', price: 0, hex: '#000000' })} className="mt-2 text-blue-600 flex items-center gap-1 hover:text-blue-800"><PlusCircle size={18} /> Adicionar Cor</button>
                 </div>
-
-                {/* Interiores */}
                 <div className="p-6 border rounded-lg">
                     <h2 className="text-xl font-semibold mb-4 text-gray-800">Interiores Disponíveis</h2>
                     {interiors.map((interior, index) => (
@@ -258,8 +261,6 @@ export default function CreateCar() {
                     ))}
                     <button type="button" onClick={() => handleAddField(setInteriors, { name: '', price: 0 })} className="mt-2 text-blue-600 flex items-center gap-1 hover:text-blue-800"><PlusCircle size={18} /> Adicionar Interior</button>
                 </div>
-
-                {/* Pacotes */}
                 <div className="p-6 border rounded-lg">
                     <h2 className="text-xl font-semibold mb-4 text-gray-800">Pacotes Opcionais</h2>
                      {packages.map((pkg, index) => (
@@ -275,7 +276,6 @@ export default function CreateCar() {
                     <button type="button" onClick={() => handleAddField(setPackages, { name: '', price: 0, features: '' })} className="mt-2 text-blue-600 flex items-center gap-1 hover:text-blue-800"><PlusCircle size={18} /> Adicionar Pacote</button>
                 </div>
             </div>
-
             <button
               type="submit"
               disabled={formLoading || !!imageUrlError}

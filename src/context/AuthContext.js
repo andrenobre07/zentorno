@@ -1,102 +1,120 @@
-// src/context/AuthContext.js
-"use client"; // Necessário para componentes do cliente no Next.js 13+
-
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth, db } from '../lib/firebaseConfig';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
+import { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  onAuthStateChanged, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
   signOut,
-  onAuthStateChanged,
-  updateProfile // Para adicionar o nome do utilizador
+  updateProfile,
+  sendPasswordResetEmail
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore'; // Importa setDoc para adicionar dados do utilizador
+import { auth, db } from '../lib/firebaseConfig';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 
 const AuthContext = createContext();
+const storage = getStorage();
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}
 
-export const AuthProvider = ({ children }) => {
+export function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  async function signup(email, password, name) {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    await updateProfile(user, { displayName: name });
+    const userDocRef = doc(db, 'users', user.uid);
+    await setDoc(userDocRef, {
+      uid: user.uid,
+      name: name,
+      email: email,
+      createdAt: new Date().toISOString(),
+      photoURL: user.photoURL,
+    });
+    return userCredential;
+  }
+
+  function login(email, password) {
+    return signInWithEmailAndPassword(auth, email, password);
+  }
+
+  function logout() {
+    return signOut(auth);
+  }
+
+  function resetPassword(email) {
+    return sendPasswordResetEmail(auth, email);
+  }
+
+  async function updateUserProfilePicture(file) {
+    if (!auth.currentUser) throw new Error("Nenhum utilizador autenticado para atualizar a foto.");
+    
+    const filePath = `profilePictures/${auth.currentUser.uid}/${file.name}`;
+    const storageRef = ref(storage, filePath);
+    const snapshot = await uploadBytes(storageRef, file);
+    const photoURL = await getDownloadURL(snapshot.ref);
+
+    // --- ALTERAÇÃO AQUI ---
+    // Usar auth.currentUser em vez de currentUser do estado
+    await updateProfile(auth.currentUser, { photoURL: photoURL });
+    
+    const userDocRef = doc(db, 'users', auth.currentUser.uid);
+    await updateDoc(userDocRef, { photoURL: photoURL });
+
+    setCurrentUser(prevUser => ({...prevUser, photoURL}));
+    return photoURL;
+  }
+
+  async function updateUsername(newName) {
+    if (!auth.currentUser) throw new Error("Nenhum utilizador autenticado.");
+    if (!newName.trim()) throw new Error("O nome não pode estar vazio.");
+    
+    // --- ALTERAÇÃO AQUI ---
+    // Usar auth.currentUser em vez de currentUser do estado
+    await updateProfile(auth.currentUser, { displayName: newName });
+    
+    const userDocRef = doc(db, 'users', auth.currentUser.uid);
+    await updateDoc(userDocRef, { name: newName });
+
+    setCurrentUser(prevUser => ({...prevUser, name: newName, displayName: newName}));
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // Se o utilizador está autenticado, verifica se é admin e busca dados adicionais
-        try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          let userDataFromFirestore = {};
-
-          if (userDocSnap.exists()) {
-            userDataFromFirestore = userDocSnap.data();
-          }
-
-          const adminDocRef = doc(db, 'admins', user.uid);
-          const adminDocSnap = await getDoc(adminDocRef);
-
-          setCurrentUser({
-            ...user,
-            name: userDataFromFirestore.name || user.displayName || user.email.split('@')[0], // Prioriza nome do Firestore, depois displayName, depois parte do email
-            isAdmin: adminDocSnap.exists() // Define isAdmin com base na existência do doc na coleção 'admins'
-          });
-        } catch (error) {
-          console.error("Erro ao verificar status de admin ou dados do utilizador:", error);
-          setCurrentUser({ ...user, name: user.displayName || user.email.split('@')[0], isAdmin: false }); // Assume não-admin em caso de erro
-        }
+        const adminDocRef = doc(db, 'admins', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
+        const [adminDocSnap, userDocSnap] = await Promise.all([
+          getDoc(adminDocRef),
+          getDoc(userDocRef)
+        ]);
+        const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+        setCurrentUser({
+          ...user,
+          name: userData.name || user.displayName,
+          photoURL: userData.photoURL || user.photoURL,
+          isAdmin: adminDocSnap.exists(),
+        });
       } else {
         setCurrentUser(null);
       }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
-
-  const register = async (email, password, name) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
-      // Adicionar o nome de exibição (display name) ao perfil do Firebase Auth
-      await updateProfile(user, { displayName: name });
-
-      // Guardar informações adicionais do utilizador na coleção 'users' do Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        email: user.email,
-        name: name,
-        createdAt: new Date().toISOString()
-      });
-
-      // Atualizar o estado do utilizador (incluindo o nome e isAdmin como false por padrão)
-      setCurrentUser({ ...user, name: name, isAdmin: false });
-      return user;
-    } catch (error) {
-      console.error("Erro no registo:", error);
-      throw error;
-    }
-  };
-
-  const login = async (email, password) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (error) {
-      console.error("Erro no login:", error);
-      throw error;
-    }
-  };
-
-  const logout = () => {
-    return signOut(auth);
-  };
 
   const value = {
     currentUser,
     loading,
-    register,
+    signup,
     login,
     logout,
+    resetPassword,
+    updateUserProfilePicture,
+    updateUsername,
   };
 
   return (
@@ -104,4 +122,4 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-};
+}

@@ -1,10 +1,10 @@
-// src/pages/_app.js
-import "../styles/globals.css";
-import { AuthProvider } from "../context/AuthContext"; // Importa AuthProvider (que é um Named Export)
+// Ficheiro: src/pages/_app.js
+import { AuthProvider } from '../context/AuthContext';
+import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }) {
   return (
-    <AuthProvider> {/* Usa o AuthProvider para envolver a aplicação */}
+    <AuthProvider>
       <Component {...pageProps} />
     </AuthProvider>
   );

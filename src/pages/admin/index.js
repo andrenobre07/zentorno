@@ -1,54 +1,54 @@
-// src/pages/admin/index.js
 import { useEffect } from "react";
 import { useRouter } from "next/router";
-import Navbar from "../../components/Navbar";
-import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
-import { Users, PlusCircle } from "lucide-react"; // Import icons
+import { useAuth } from "../../context/AuthContext";
+import Navbar from "../../components/Navbar";
+import { Users, Car, PlusCircle, List } from "lucide-react"; // Adicionado List
 
 export default function AdminDashboard() {
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && (!currentUser || !currentUser.isAdmin)) {
-      router.push("/"); // Redireciona para home se não for um admin
-      alert("Acesso negado. Apenas administradores podem aceder a esta página.");
+    if (!loading && !currentUser?.isAdmin) {
+      router.push("/");
     }
-  }, [currentUser, authLoading, router]);
+  }, [currentUser, loading, router]);
 
-  if (authLoading || !currentUser || !currentUser.isAdmin) {
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-        <p className="text-gray-700 text-lg">Verificando permissões de administrador...</p>
-      </main>
-    );
+  if (loading || !currentUser?.isAdmin) {
+    return <div className="min-h-screen flex items-center justify-center"><p>A verificar permissões...</p></div>;
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-24 pb-8">
+    <main className="min-h-screen bg-gray-100">
       <Navbar />
-      <section className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl p-8 md:p-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Painel de Administrador</h1>
+      <section className="container mx-auto px-4 py-12 pt-24">
+        <h1 className="text-4xl font-bold text-gray-800 mb-8">Painel de Administrador</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          
+          {/* Card para Ver Utilizadores */}
+          <Link href="/admin/utilizadores" className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow flex flex-col items-center text-center">
+            <Users className="w-12 h-12 text-blue-600 mb-4" />
+            <h2 className="text-xl font-bold text-gray-900">Gerir Utilizadores</h2>
+            <p className="text-gray-600 mt-2">Ver todos os utilizadores registados no sistema.</p>
+          </Link>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Link href="/admin/utilizadores" className="block">
-              <div className="flex flex-col items-center justify-center p-6 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 transform hover:scale-105">
-                <Users size={48} className="mb-3" />
-                <span className="text-xl font-semibold text-center">Ver Utilizadores</span>
-                <p className="text-sm text-blue-100 mt-1 text-center">Gerir contas de utilizadores registados.</p>
-              </div>
-            </Link>
+          {/* Card para Criar Carro */}
+          <Link href="/admin/criar-carro" className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow flex flex-col items-center text-center">
+            <PlusCircle className="w-12 h-12 text-green-600 mb-4" />
+            <h2 className="text-xl font-bold text-gray-900">Adicionar Carro</h2>
+            <p className="text-gray-600 mt-2">Adicionar um novo veículo ao catálogo de vendas.</p>
+          </Link>
+          
+          {/* --- NOVO CARD ADICIONADO AQUI --- */}
+        
+          <Link href="/admin/gerir-carros" className="bg-white p-6 rounded-xl shadow-lg hover:shadow-2xl transition-shadow flex flex-col items-center text-center">
+              <List className="w-12 h-12 text-purple-600 mb-4" />
+              <h2 className="text-xl font-bold text-gray-900">Gerir Carros</h2>
+              <p className="text-gray-600 mt-2">Editar ou eliminar carros existentes no catálogo.</p>
+          </Link>
 
-            <Link href="/admin/criar-carro" className="block">
-              <div className="flex flex-col items-center justify-center p-6 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors duration-300 transform hover:scale-105">
-                <PlusCircle size={48} className="mb-3" />
-                <span className="text-xl font-semibold text-center">Criar Novo Carro</span>
-                <p className="text-sm text-green-100 mt-1 text-center">Adicionar novos modelos ao catálogo.</p>
-              </div>
-            </Link>
-          </div>
         </div>
       </section>
     </main>

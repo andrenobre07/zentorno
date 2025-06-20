@@ -6,19 +6,21 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { Loader, AlertCircle, CheckCircle, Settings, Droplet, Car, Package } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
+import { useAuth } from '../../context/AuthContext';
+
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function CarDetails() {
+  const { currentUser } = useAuth(); // Obter o utilizador atual
   const router = useRouter();
   const { id } = router.query;
 
   const [car, setCar] = useState(null);
-  const [loading, setLoading] = useState(true); // Loading da página inicial
-  const [checkoutLoading, setCheckoutLoading] = useState(false); // Loading específico para o botão
+  const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // State for price calculation
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedInterior, setSelectedInterior] = useState(null);
   const [selectedPackages, setSelectedPackages] = useState([]);
@@ -35,8 +37,12 @@ export default function CarDetails() {
           if (carDocSnap.exists()) {
             const carData = { id: carDocSnap.id, ...carDocSnap.data() };
             setCar(carData);
-            if (carData.colors && carData.colors.length > 0) setSelectedColor(carData.colors[0]);
-            if (carData.interiors && carData.interiors.length > 0) setSelectedInterior(carData.interiors[0]);
+            if (carData.colors && carData.colors.length > 0) {
+              setSelectedColor(carData.colors[0]);
+            }
+            if (carData.interiors && carData.interiors.length > 0) {
+              setSelectedInterior(carData.interiors[0]);
+            }
             setTotalPrice(carData.preco);
           } else {
             setError("Carro não encontrado.");
@@ -55,15 +61,17 @@ export default function CarDetails() {
     if (!car) return;
 
     let newTotal = car.preco;
-    if (selectedColor) newTotal += selectedColor.price;
-    if (selectedInterior) newTotal += selectedInterior.price;
+    if (selectedColor && typeof selectedColor.price === 'number') newTotal += selectedColor.price;
+    if (selectedInterior && typeof selectedInterior.price === 'number') newTotal += selectedInterior.price;
+    
     selectedPackages.forEach(pkgName => {
-        const packageData = car.packages.find(p => p.name === pkgName);
-        if(packageData) newTotal += packageData.price;
+      const packageData = car.packages.find(p => p.name === pkgName);
+      if(packageData && typeof packageData.price === 'number') newTotal += packageData.price;
     });
 
     setTotalPrice(newTotal);
   }, [car, selectedColor, selectedInterior, selectedPackages]);
+
 
   const handlePackageToggle = (packageName) => {
     setSelectedPackages(prev => 
@@ -78,22 +86,29 @@ export default function CarDetails() {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
   };
 
-  // --- FUNÇÃO ATUALIZADA ---
   const handleCheckout = async () => {
+    // ALTERAÇÃO AQUI: Verifica se o utilizador tem login feito
+    if (!currentUser) {
+      alert("Por favor, faça login para continuar com a sua compra.");
+      router.push(`/login?redirect=/car/${id}`);
+      return;
+    }
+
     setCheckoutLoading(true);
     try {
-      const carForCheckout = {
-          ...car,
-          totalPrice: totalPrice,
+      const configuration = {
+          totalPrice,
+          color: selectedColor,
+          interior: selectedInterior,
+          packages: selectedPackages,
       };
 
       const response = await fetch('/api/checkout_sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ car: carForCheckout }),
+        body: JSON.stringify({ car, configuration }),
       });
-
-      // Verifica se a resposta da API foi bem-sucedida
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Falha ao criar a sessão de pagamento.');
@@ -102,7 +117,6 @@ export default function CarDetails() {
       const session = await response.json();
       const stripe = await stripePromise;
       
-      // Redirecionar para o checkout do Stripe
       const result = await stripe.redirectToCheckout({
         sessionId: session.id,
       });
@@ -114,11 +128,10 @@ export default function CarDetails() {
       console.error('Checkout error:', err);
       alert(`Erro ao iniciar o pagamento: ${err.message}`);
     } finally {
-      // Garante que o loading é desativado, quer haja sucesso ou erro
       setCheckoutLoading(false);
     }
   };
-
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -150,14 +163,12 @@ export default function CarDetails() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 pt-24 pb-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Coluna Esquerda: Imagem e Títulos */}
           <div className="space-y-4">
             <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-900 tracking-tight">{car.nome}</h1>
             <p className="text-xl text-gray-600">{car.tagline}</p>
             <img src={car.imagem} alt={car.nome} className="w-full rounded-xl shadow-2xl" />
           </div>
 
-          {/* Coluna Direita: Configuração e Preço */}
           <div>
             <div className="sticky top-24 bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center gap-3 mb-6">
@@ -182,7 +193,7 @@ export default function CarDetails() {
                 {car.interiors && car.interiors.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold mb-2 flex items-center gap-2"><Car size={20}/>Interior</h3>
-                    <select onChange={(e) => setSelectedInterior(car.interiors.find(i => i.name === e.target.value))} className="w-full p-3 border rounded-lg bg-gray-50 text-base focus:ring-blue-500 focus:border-blue-500">
+                    <select value={selectedInterior?.name || ''} onChange={(e) => setSelectedInterior(car.interiors.find(i => i.name === e.target.value))} className="w-full p-3 border rounded-lg bg-gray-50 text-base focus:ring-blue-500 focus:border-blue-500">
                         {car.interiors.map(interior => (
                             <option key={interior.name} value={interior.name}>{interior.name} (+{formatPrice(interior.price)})</option>
                         ))}

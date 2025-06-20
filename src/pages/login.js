@@ -28,8 +28,9 @@ export default function Login() {
       // Usar a função do Firebase para fazer login
       await signInWithEmailAndPassword(auth, email, password);
       
-      // Redirecionar para a página principal após login com sucesso
-      router.push('/');
+      // ALTERAÇÃO AQUI: Redireciona para a página anterior ou para a home
+      const redirectUrl = router.query.redirect || '/';
+      router.push(redirectUrl);
 
     } catch (err) {
       console.error("Erro de login:", err.code);
@@ -91,11 +92,11 @@ export default function Login() {
             <div className="space-y-6">
               {/* Botões de login social */}
               <div className="mb-6">
-                 {/* ... O seu botão do Google fica aqui ... */}
+                   {/* ... O seu botão do Google fica aqui ... */}
               </div>
               
               <div className="relative">
-                {/* ... O seu divisor "Ou continua com" fica aqui ... */}
+                   {/* ... O seu divisor "Ou continua com" fica aqui ... */}
               </div>
               
               <form onSubmit={handleSubmit} className="space-y-6">
