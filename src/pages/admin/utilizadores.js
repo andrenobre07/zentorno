@@ -1,128 +1,185 @@
 // src/pages/admin/utilizadores.js
-import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import Navbar from "../../components/Navbar"; // Ajusta o caminho para Navbar
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../lib/firebaseConfig";
+
+import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { Loader } from 'lucide-react'; // Importa o ícone Loader
+import { db, auth } from '../../lib/firebaseConfig';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore'; // Importações necessárias
+import Navbar from '../../components/Navbar';
+import { Loader, Edit, Trash2, Shield, User, RefreshCw, ShieldCheck, ShieldOff } from 'lucide-react';
 
-export default function Utilizadores() {
-  const [users, setUsers] = useState([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
-  const [error, setError] = useState(null);
-
+export default function GerirUtilizadores() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // A função para buscar todos os dados dos utilizadores
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // 1. Buscar todos os utilizadores da coleção 'users'
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      
+      // 2. Para cada utilizador, verificar se ele existe na coleção 'admins'
+      const usersList = await Promise.all(usersSnapshot.docs.map(async (userDoc) => {
+        const adminDocRef = doc(db, 'admins', userDoc.id);
+        const adminDocSnap = await getDoc(adminDocRef);
+        return {
+          id: userDoc.id,
+          ...userDoc.data(),
+          isAdmin: adminDocSnap.exists(), // A fonte da verdade para o papel
+        };
+      }));
+
+      setUsers(usersList);
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+      alert("Não foi possível carregar os utilizadores.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    // console.log("Auth Loading:", authLoading); // Para depuração
-    // console.log("Current User:", currentUser); // Para depuração
-
     if (!authLoading) {
-      if (!currentUser) {
-        // console.log("Redirecionando para login: Não há utilizador."); // Para depuração
-        router.push('/login');
-      } else if (!currentUser.isAdmin) {
-        // console.log("Redirecionando para home: Utilizador não é admin."); // Para depuração
+      if (!currentUser?.isAdmin) {
+        // Se não for admin, não pode estar aqui
         router.push('/');
-        alert("Acesso negado. Apenas administradores podem ver esta página.");
+      } else {
+        fetchData();
       }
     }
-  }, [currentUser, authLoading, router]);
+  }, [currentUser, authLoading, router, fetchData]);
 
-  useEffect(() => {
-    if (!authLoading && currentUser && currentUser.isAdmin) {
-      const fetchUsers = async () => {
-        try {
-          setLoadingUsers(true);
-          setError(null);
-
-          const usersCollectionRef = collection(db, "users");
-          const querySnapshot = await getDocs(usersCollectionRef);
-
-          const usersList = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          }));
-
-          setUsers(usersList);
-        } catch (err) {
-          console.error("Erro ao buscar utilizadores:", err);
-          setError("Não foi possível carregar os utilizadores. Tente novamente mais tarde.");
-          if (err.code === 'permission-denied') {
-            setError("Permissão negada. Verifique as regras do Firestore.");
-          }
-        } finally {
-          setLoadingUsers(false);
-        }
-      };
-
-      fetchUsers();
+  // --- O BOTÃO DE "TORNAR ADMIN" VOLTA A VIVER AQUI ---
+  const handleToggleAdmin = async (userToToggle) => {
+    if (userToToggle.id === currentUser?.uid) {
+      alert("Não pode alterar o seu próprio estatuto de administrador.");
+      return;
     }
-  }, [currentUser, authLoading]); // Dependências corrigidas para garantir que roda quando o currentUser está disponível
 
-  if (authLoading || !currentUser || !currentUser.isAdmin) {
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center">
-        <p className="text-gray-700 text-lg">Verificando permissões...</p>
-      </main>
-    );
+    try {
+      // Chama a nossa API fiável
+      await fetch('/api/toggleAdmin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userToToggle.id,
+          makeAdmin: !userToToggle.isAdmin,
+        }),
+      });
+
+      // --- A CORREÇÃO MÁGICA ---
+      // Após a API ter sucesso, simplesmente chamamos a fetchData novamente.
+      // Isto vai buscar a lista de utilizadores atualizada e redesenhar a tabela
+      // com a informação correta, resolvendo o problema do "Papel" não atualizar.
+      alert(`O estatuto de ${userToToggle.name} foi alterado com sucesso.`);
+      fetchData();
+
+    } catch (error) {
+      console.error("Erro ao alterar papel do utilizador:", error);
+      alert("Não foi possível alterar o papel do utilizador.");
+    }
+  };
+
+  const handleDeleteUser = async (uid) => {
+    if (uid === currentUser?.uid) {
+      alert("Não pode eliminar a sua própria conta de administrador.");
+      return;
+    }
+
+    if (window.confirm("Tem a certeza que quer eliminar este utilizador? Esta ação é PERMANENTE.")) {
+      try {
+        const idToken = await currentUser.getIdToken(true);
+        const response = await fetch('/api/deleteUser', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, uidToDelete: uid }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error);
+        alert("Utilizador eliminado com sucesso.");
+        fetchData(); // Recarregar os dados aqui também
+      } catch (error) {
+        console.error("Erro ao chamar a API de eliminação:", error);
+        alert(`Não foi possível eliminar o utilizador: ${error.message}`);
+      }
+    }
+  };
+
+  if (authLoading || loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader className="animate-spin text-blue-600" size={48} /></div>;
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-24 pb-8">
+    <main className="min-h-screen bg-gray-100">
       <Navbar />
-
-      <section className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl p-8 md:p-12">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6 text-center">Utilizadores Registados</h1>
-
-          {loadingUsers && (
-            <div className="flex items-center justify-center text-blue-600">
-              <Loader size={24} className="animate-spin mr-2" />
-              A carregar utilizadores...
-            </div>
-          )}
-
-          {error && (
-            <p className="text-red-600 text-center mb-4">{error}</p>
-          )}
-
-          {!loadingUsers && !error && users.length === 0 && (
-            <p className="text-gray-600 text-center">Nenhum utilizador registado encontrado.</p>
-          )}
-
-          {!loadingUsers && !error && users.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full bg-white rounded-lg shadow-md overflow-hidden">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID Firebase</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {user.name || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {user.email || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                        {user.id || "N/A"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+      <div className="container mx-auto px-4 py-12 pt-24">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-800">Gerir Utilizadores</h1>
+          <button onClick={fetchData} className="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+            <RefreshCw size={18} />
+            Atualizar Lista
+          </button>
         </div>
-      </section>
+        <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="bg-gray-50 border-b">
+              <tr>
+                <th className="p-4 font-semibold">Nome</th>
+                <th className="p-4 font-semibold">Email</th>
+                <th className="p-4 font-semibold">Papel</th>
+                <th className="p-4 font-semibold text-center">Tornar Admin</th>
+                <th className="p-4 font-semibold text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(user => (
+                <tr key={user.id} className="border-b hover:bg-gray-50">
+                  <td className="p-4 font-medium text-gray-900">{user.name}</td>
+                  <td className="p-4 text-gray-600">{user.email}</td>
+                  <td className="p-4">
+                    {user.isAdmin ? (
+                      <span className="inline-flex items-center gap-1 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
+                        <Shield size={14} /> Admin
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-gray-100 text-gray-800 text-xs font-semibold px-2 py-1 rounded-full">
+                        <User size={14} /> Utilizador
+                      </span>
+                    )}
+                  </td>
+                  <td className="p-4 text-center">
+                    <button 
+                      onClick={() => handleToggleAdmin(user)}
+                      title={user.isAdmin ? "Remover como Admin" : "Tornar Admin"}
+                      className={`p-2 rounded-full transition-colors ${user.id === currentUser?.uid ? 'cursor-not-allowed opacity-50' : ''}`}
+                      disabled={user.id === currentUser?.uid}
+                    >
+                      {user.isAdmin ? <ShieldOff className="text-red-500"/> : <ShieldCheck className="text-green-500"/>}
+                    </button>
+                  </td>
+                  <td className="p-4 text-right">
+                    <Link href={`/admin/editar-utilizador/${user.id}`} className="text-blue-600 hover:text-blue-800 mr-4" title="Editar">
+                      <Edit size={20} className="inline-block" />
+                    </Link>
+                    <button 
+                      onClick={() => handleDeleteUser(user.id)}
+                      className={`text-red-600 hover:text-red-800 ${user.id === currentUser?.uid ? 'cursor-not-allowed opacity-50' : ''}`}
+                      title="Eliminar Utilizador"
+                      disabled={user.id === currentUser?.uid}
+                    >
+                      <Trash2 size={20} className="inline-block" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </main>
   );
 }

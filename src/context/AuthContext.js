@@ -1,8 +1,10 @@
+// src/context/AuthContext.js
+
 import { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  onAuthStateChanged, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
   updateProfile,
   sendPasswordResetEmail
@@ -19,8 +21,12 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null); // Objeto para a UI (com dados do Firestore)
   const [loading, setLoading] = useState(true);
+
+  // --- ALTERAÇÃO PRINCIPAL: SEPARAMOS O OBJETO DO FIREBASE ---
+  // A função `updatePassword` precisa do objeto 'user' original do Firebase, não do nosso objeto combinado.
+  // Vamos guardá-lo no `auth.currentUser` que já é gerido pelo Firebase.
 
   async function signup(email, password, name) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -57,13 +63,12 @@ export function AuthProvider({ children }) {
     const snapshot = await uploadBytes(storageRef, file);
     const photoURL = await getDownloadURL(snapshot.ref);
 
-    // --- ALTERAÇÃO AQUI ---
-    // Usar auth.currentUser em vez de currentUser do estado
     await updateProfile(auth.currentUser, { photoURL: photoURL });
     
     const userDocRef = doc(db, 'users', auth.currentUser.uid);
     await updateDoc(userDocRef, { photoURL: photoURL });
 
+    // Atualiza o nosso objeto de UI para refletir a mudança instantaneamente
     setCurrentUser(prevUser => ({...prevUser, photoURL}));
     return photoURL;
   }
@@ -72,19 +77,19 @@ export function AuthProvider({ children }) {
     if (!auth.currentUser) throw new Error("Nenhum utilizador autenticado.");
     if (!newName.trim()) throw new Error("O nome não pode estar vazio.");
     
-    // --- ALTERAÇÃO AQUI ---
-    // Usar auth.currentUser em vez de currentUser do estado
     await updateProfile(auth.currentUser, { displayName: newName });
     
     const userDocRef = doc(db, 'users', auth.currentUser.uid);
     await updateDoc(userDocRef, { name: newName });
 
+    // Atualiza o nosso objeto de UI
     setCurrentUser(prevUser => ({...prevUser, name: newName, displayName: newName}));
   }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // A lógica original está correta, mas vamos garantir que `isAdmin` vem do sítio certo
         const adminDocRef = doc(db, 'admins', user.uid);
         const userDocRef = doc(db, 'users', user.uid);
         const [adminDocSnap, userDocSnap] = await Promise.all([
@@ -92,12 +97,16 @@ export function AuthProvider({ children }) {
           getDoc(userDocRef)
         ]);
         const userData = userDocSnap.exists() ? userDocSnap.data() : {};
+        
+        // Criamos o nosso objeto de UI, mas o 'user' original do Firebase continua disponível em `auth.currentUser`
         setCurrentUser({
-          ...user,
-          name: userData.name || user.displayName,
-          photoURL: userData.photoURL || user.photoURL,
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          ...userData, // Adiciona nome, foto, etc., do Firestore
           isAdmin: adminDocSnap.exists(),
         });
+
       } else {
         setCurrentUser(null);
       }
