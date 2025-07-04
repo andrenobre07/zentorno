@@ -10,7 +10,6 @@ export default function CreateCar() {
   const { currentUser, loading: authLoading } = useAuth();
   const router = useRouter();
 
-  // Seus estados originais
   const [carName, setCarName] = useState("");
   const [tagline, setTagline] = useState("");
   const [description, setDescription] = useState("");
@@ -85,7 +84,6 @@ export default function CreateCar() {
         consumo: fuelConsumption,
         features: features.split('\n').filter(f => f.trim() !== ''),
         colors: colors.map(c => ({ ...c, price: parseFloat(c.price) || 0 })),
-        // --- A CORREÇÃO ESTÁ NESTA LINHA ---
         interiors: interiors.map(i => ({ ...i, price: parseFloat(i.price) || 0 })),
         packages: packages.map(p => ({
           ...p,
@@ -102,7 +100,7 @@ export default function CreateCar() {
       alert("Carro adicionado com sucesso ao catálogo!");
       router.push('/admin/gerir-carros');
 
-    } catch (err) {
+    } catch (err) { // --- A CORREÇÃO ESTÁ AQUI ---
       console.error("Erro ao adicionar carro:", err);
       setFormError(`Erro ao adicionar o carro: ${err.message}`);
     } finally {
@@ -113,7 +111,8 @@ export default function CreateCar() {
   if (authLoading || !currentUser || !currentUser.isAdmin) {
     return (
       <main className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <p className="text-gray-700 text-lg">Verificando permissões...</p>
+        <Loader className="animate-spin text-blue-600" size={48} />
+        <p className="ml-4 text-gray-700 text-lg">A verificar permissões...</p>
       </main>
     );
   }
@@ -146,7 +145,7 @@ export default function CreateCar() {
                 </div>
                 <div>
                   <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-1">Preço Base (€)</label>
-                  <input type="number" id="basePrice" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} className="w-full px-4 py-2 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: 85000" min="0" required />
+                  <input type="number" id="basePrice" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} className="w-full px-4 py-2 rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: 85000" min="0" max="999999" required />
                 </div>
                 <div>
                   <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
@@ -221,7 +220,7 @@ export default function CreateCar() {
                     {colors.map((color, index) => (
                         <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center mb-4 p-2 border-b">
                             <input type="text" name="name" value={color.name} onChange={e => handleFieldChange(setColors, index, e)} placeholder="Nome da Cor" className="md:col-span-2 px-3 py-2 border rounded-lg" />
-                            <input type="number" name="price" value={color.price} onChange={e => handleFieldChange(setColors, index, e)} placeholder="Preço Adicional" className="px-3 py-2 border rounded-lg" />
+                            <input type="number" name="price" value={color.price} onChange={e => handleFieldChange(setColors, index, e)} placeholder="Preço Adicional" className="px-3 py-2 border rounded-lg" min="0" max="999999" />
                             <div className="flex items-center gap-2">
                                 <input type="color" name="hex" value={color.hex} onChange={e => handleFieldChange(setColors, index, e)} className="h-10 w-10 p-1 border rounded-lg"/>
                                 <button type="button" onClick={() => handleRemoveField(setColors, index)} className="p-2 text-red-500 hover:bg-red-100 rounded-full"><Trash2 size={16} /></button>
@@ -236,7 +235,7 @@ export default function CreateCar() {
                         <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mb-4 p-2 border-b">
                            <input type="text" name="name" value={interior.name} onChange={e => handleFieldChange(setInteriors, index, e)} placeholder="Nome do Interior" className="md:col-span-2 px-3 py-2 border rounded-lg" />
                            <div className="flex items-center gap-2">
-                             <input type="number" name="price" value={interior.price} onChange={e => handleFieldChange(setInteriors, index, e)} placeholder="Preço Adicional" className="w-full px-3 py-2 border rounded-lg" />
+                             <input type="number" name="price" value={interior.price} onChange={e => handleFieldChange(setInteriors, index, e)} placeholder="Preço Adicional" className="w-full px-3 py-2 border rounded-lg" min="0" max="999999" />
                              <button type="button" onClick={() => handleRemoveField(setInteriors, index)} className="p-2 text-red-500 hover:bg-red-100 rounded-full"><Trash2 size={16} /></button>
                            </div>
                         </div>
@@ -250,7 +249,7 @@ export default function CreateCar() {
                            <button type="button" onClick={() => handleRemoveField(setPackages, index)} className="absolute top-2 right-2 p-1 text-red-500 hover:bg-red-100 rounded-full"><X size={16} /></button>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <input type="text" name="name" value={pkg.name} onChange={e => handleFieldChange(setPackages, index, e)} placeholder="Nome do Pacote" className="px-3 py-2 border rounded-lg" />
-                               <input type="number" name="price" value={pkg.price} onChange={e => handleFieldChange(setPackages, index, e)} placeholder="Preço Adicional" className="px-3 py-2 border rounded-lg" />
+                               <input type="number" name="price" value={pkg.price} onChange={e => handleFieldChange(setPackages, index, e)} placeholder="Preço Adicional" className="px-3 py-2 border rounded-lg" min="0" max="999999" />
                            </div>
                            <textarea name="features" value={pkg.features} onChange={e => handleFieldChange(setPackages, index, e)} rows="3" placeholder="Itens do pacote (um por linha)" className="mt-4 w-full px-3 py-2 border rounded-lg"></textarea>
                         </div>

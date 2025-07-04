@@ -87,7 +87,6 @@ export default function CarDetails() {
   };
 
   const handleCheckout = async () => {
-    // ALTERAÇÃO AQUI: Verifica se o utilizador tem login feito
     if (!currentUser) {
       alert("Por favor, faça login para continuar com a sua compra.");
       router.push(`/login?redirect=/car/${id}`);
@@ -106,7 +105,8 @@ export default function CarDetails() {
       const response = await fetch('/api/checkout_sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ car, configuration }),
+        // --- ALTERAÇÃO AQUI: Enviamos o ID do utilizador ---
+        body: JSON.stringify({ car, configuration, userId: currentUser.uid }),
       });
       
       if (!response.ok) {

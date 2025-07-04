@@ -38,9 +38,55 @@ export default function Perfil() {
     }
   }, [currentUser, loading, router]);
 
-  const handleLogout = async () => { /* ...a sua função original... */ };
-  const handleSaveName = async () => { /* ...a sua função original... */ };
-  const handlePhotoChange = async (e) => { /* ...a sua função original... */ };
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+      alert("Falha ao terminar a sessão.");
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!newName.trim() || newName.trim() === currentUser.name) {
+      setIsEditingName(false);
+      return;
+    }
+    try {
+      await updateUsername(newName.trim());
+      setIsEditingName(false);
+    } catch (error) {
+      console.error("Erro ao atualizar o nome:", error);
+      alert("Falha ao atualizar o nome.");
+    }
+  };
+  
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+        setUploadError('Por favor, selecione um ficheiro de imagem.');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // Limite de 5MB
+        setUploadError('O ficheiro é demasiado grande. Limite de 5MB.');
+        return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+        await updateUserProfilePicture(file);
+    } catch (error) {
+        console.error("Erro ao carregar a foto:", error);
+        setUploadError('Ocorreu um erro ao carregar a foto. Tente novamente.');
+    } finally {
+        setUploading(false);
+    }
+  };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -102,7 +148,6 @@ export default function Perfil() {
     return <div className="min-h-screen flex items-center justify-center"><Loader className="animate-spin text-blue-600" size={48} /></div>;
   }
 
-  // O seu JSX original, com a correção do avatar
   return (
     <main className="min-h-screen bg-gray-100">
       <Navbar />
@@ -129,7 +174,6 @@ export default function Perfil() {
             {uploading && <p className="text-sm text-blue-600">A carregar...</p>}
             {uploadError && <p className="text-sm text-red-600 mt-2">{uploadError}</p>}
             
-            {/* O resto do seu JSX permanece igual... */}
             <div className="mt-4">
               {!isEditingName ? (
                 <div className="flex items-center gap-2">
