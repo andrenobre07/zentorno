@@ -115,12 +115,7 @@ export default function Login() {
                   <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Digita a tua senha" required />
                 </div>
                 
-                {/* Checkbox "Lembrar-me" (código igual) */}
-                <div className="flex items-center">
-                  <input type="checkbox" id="remember-me" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Lembrar-me</label>
-                </div>
-                
+         
                 {/* --- MOSTRAR MENSAGEM DE ERRO AQUI --- */}
                 {error && (
                   <p className="text-sm text-red-600 text-center">{error}</p>

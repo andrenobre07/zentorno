@@ -173,7 +173,7 @@ export default function Footer() {
                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                   />
                 </svg>
-                <span className="text-gray-400">contato@zentorno.com</span>
+                <span className="text-gray-400">zentorno@lester.com</span>
               </li>
               <li className="flex items-start">
                 <svg
@@ -211,24 +211,6 @@ export default function Footer() {
                 </div>
               </li>
             </ul>
-          </div>
-
-          {/* Newsletter */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-4 text-white">Newsletter</h3>
-            <p className="text-gray-400 mb-4">
-              Inscreve-te para receber as últimas novidades e ofertas exclusivas.
-            </p>
-            <form className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="email"
-                placeholder="Seu e-mail"
-                className="bg-gray-800 text-white px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors duration-300">
-                Inscrever
-              </button>
-            </form>
           </div>
         </div>
       </div>
