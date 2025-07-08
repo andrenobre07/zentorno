@@ -9,9 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@next/eslint-plugin-next": "^15.3.5",
     "@react-email/components": "^0.0.42",
     "@stripe/react-stripe-js": "^3.7.0",
     "@stripe/stripe-js": "^7.3.1",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.6",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "firebase": "^10.11.1",
     "firebase-admin": "^12.0.0",
     "firebase-functions": "^6.3.2",
@@ -20,17 +26,16 @@
     "micro": "^10.0.1",
     "modules": "^0.4.0",
     "next": "^15.3.3",
+    "postcss": "^8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-email": "^4.0.16",
     "resend": "^4.5.2",
-    "stripe": "^18.2.1"
+    "stripe": "^18.2.1",
+    "tailwindcss": "^3.4.1",
+    "typescript-eslint": "^8.36.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "eslint": "^9",
-    "eslint-config-next": "15.1.6",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1"
+    "@eslint/eslintrc": "^3"
   }
 }
