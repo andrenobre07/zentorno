@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { doc, getDoc } from 'firebase/firestore';
-// Importamos 'auth' diretamente da configuração do Firebase
 import { db, auth } from '../../lib/firebaseConfig'; 
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { Loader, AlertCircle, CheckCircle, Settings, Droplet, Car, Package } from 'lucide-react';
-import { loadStripe } from '@stripe/stripe-js';
 import { useAuth } from '../../context/AuthContext';
 
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+// Já não precisamos do 'loadStripe' aqui, porque isso será feito na página de checkout
+// const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 export default function CarDetails() {
   const { currentUser } = useAuth(); // Obter o utilizador atual
@@ -87,8 +85,7 @@ export default function CarDetails() {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
   };
 
-  // ########## A ÚNICA ALTERAÇÃO ESTÁ AQUI ##########
-  // Esta função agora guarda os dados e redireciona para a nossa página de checkout.
+  // ########## A FUNÇÃO CORRIGIDA PARA O NOVO CHECKOUT ##########
   const handleCheckout = () => {
     if (!currentUser) {
       alert("Por favor, faça login para continuar com a sua compra.");
@@ -98,7 +95,6 @@ export default function CarDetails() {
 
     setCheckoutLoading(true);
 
-    // Junta a configuração completa num objeto
     const configuration = {
         totalPrice,
         color: selectedColor,
@@ -106,8 +102,8 @@ export default function CarDetails() {
         packages: selectedPackages,
     };
 
-    // Guarda os dados no sessionStorage para a página seguinte poder aceder
     try {
+      // Guarda os dados no sessionStorage para a página seguinte poder aceder
       sessionStorage.setItem('checkoutConfig', JSON.stringify(configuration));
       sessionStorage.setItem('checkoutCar', JSON.stringify(car));
 
@@ -119,7 +115,7 @@ export default function CarDetails() {
       setCheckoutLoading(false);
     }
   };
-  // ######################################################
+  // ##############################################################
   
   if (loading) {
     return (
@@ -213,7 +209,7 @@ export default function CarDetails() {
                 className="w-full mt-6 bg-blue-600 text-white font-bold py-4 rounded-lg text-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {checkoutLoading && <Loader className="w-6 h-6 animate-spin"/>}
-                {checkoutLoading ? 'A Processar...' : 'Próximo Passo'}
+                {checkoutLoading ? 'A Preparar...' : 'Finalizar Compra'}
               </button>
             </div>
           </div>
