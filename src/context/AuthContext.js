@@ -6,7 +6,8 @@ import {
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
   signOut,
-  sendPasswordResetEmail // Adicionado para a funcionalidade de esqueci-senha
+  sendPasswordResetEmail,
+  updateProfile // Adicionado para a correção
 } from 'firebase/auth';
 import { auth, db } from '../lib/firebaseConfig';
 import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
@@ -27,8 +28,8 @@ export function AuthProvider({ children }) {
     const data = {
       uid: user.uid,
       email: user.email,
-      name: additionalData.name || user.displayName, // Garante que o nome é preservado
-      photoURL: additionalData.photoURL || user.photoURL, // Garante que a foto é preservada
+      name: additionalData.name || user.displayName,
+      photoURL: additionalData.photoURL || user.photoURL,
       ...additionalData,
     };
     await setDoc(userRef, data, { merge: true });
@@ -53,15 +54,28 @@ export function AuthProvider({ children }) {
     return sendPasswordResetEmail(auth, email);
   };
 
+  // --- FUNÇÃO CORRIGIDA ---
+  // A função foi alterada para atualizar o nome de forma segura,
+  // sem apagar a foto de perfil.
   const updateUsername = async (name) => {
     if (auth.currentUser) {
-      // Já não precisamos do updateProfile aqui, a API faz isso por nós
-      const updatedData = await updateUserInFirestore(auth.currentUser, { name });
-      setCurrentUser(prevUser => ({ ...prevUser, ...updatedData }));
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      
+      // 1. Atualiza apenas o campo 'name' no Firestore
+      await updateDoc(userRef, { name });
+      
+      // 2. Atualiza o 'displayName' no perfil de autenticação do Firebase
+      await updateProfile(auth.currentUser, { displayName: name });
+
+      // 3. Atualiza o estado local para que a mudança seja refletida imediatamente
+      setCurrentUser(prevUser => ({ 
+        ...prevUser, 
+        name: name, 
+        displayName: name 
+      }));
     }
   };
 
-  // --- FUNÇÃO CORRIGIDA PARA A FOTO DE PERFIL ---
   const updateUserProfilePicture = async (file) => {
     if (!auth.currentUser || !file) return;
 
@@ -75,15 +89,10 @@ export function AuthProvider({ children }) {
     try {
       const base64Photo = await toBase64(file);
       
-      // A LINHA QUE CAUSAVA O ERRO FOI REMOVIDA.
-      // Já não fazemos: await updateProfile(auth.currentUser, ...);
-
-      // Apenas atualizamos o Firestore, que tem espaço suficiente
       await updateDoc(doc(db, 'users', auth.currentUser.uid), {
         photoURL: base64Photo
       });
 
-      // Atualiza o estado local para refletir a mudança imediatamente
       setCurrentUser(prevUser => ({ ...prevUser, photoURL: base64Photo }));
 
     } catch (error) {
@@ -104,12 +113,11 @@ export function AuthProvider({ children }) {
         ]);
 
         let combinedUser = {
-          ...user, // Dados base do Auth (uid, email)
-          ...(userDocSnap.exists() ? userDocSnap.data() : {}), // Dados do Firestore (nome, photoURL, etc.)
+          ...user,
+          ...(userDocSnap.exists() ? userDocSnap.data() : {}),
           isAdmin: adminDocSnap.exists(),
         };
 
-        // Se o documento do utilizador não existir no Firestore, criamos um
         if (!userDocSnap.exists()) {
           const initialData = {
             uid: user.uid,

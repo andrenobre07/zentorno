@@ -4,9 +4,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { db } from '../../lib/firebaseConfig';
+// AQUI ESTÁ A ALTERAÇÃO PRINCIPAL
+import { auth, db } from '../../lib/firebaseConfig'; // Importamos 'auth' para a correção
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-import Navbar from '../../components/Navbar'; // CORREÇÃO AQUI
+import Navbar from '../../components/Navbar';
 import { Loader, Edit, Trash2, Shield, User, RefreshCw, ShieldCheck, ShieldOff, Camera, X } from 'lucide-react';
 
 export default function GerirUtilizadores() {
@@ -15,6 +16,7 @@ export default function GerirUtilizadores() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // O resto dos teus 'states' permanece igual...
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -22,6 +24,7 @@ export default function GerirUtilizadores() {
   const fileInputRef = useRef(null);
   
   const fetchData = useCallback(async () => {
+    // A tua função fetchData permanece igual
     setLoading(true);
     try {
       const usersSnapshot = await getDocs(collection(db, 'users'));
@@ -53,6 +56,7 @@ export default function GerirUtilizadores() {
     }
   }, [currentUser, authLoading, router, fetchData]);
 
+  // A tua função handleToggleAdmin permanece igual
   const handleToggleAdmin = async (userToToggle) => {
     if (userToToggle.id === currentUser?.uid) {
       alert("Não pode alterar o seu próprio estatuto de administrador.");
@@ -75,6 +79,7 @@ export default function GerirUtilizadores() {
     }
   };
 
+  // --- FUNÇÃO PARA APAGAR UTILIZADOR CORRIGIDA ---
   const handleDeleteUser = async (uid) => {
     if (uid === currentUser?.uid) {
       alert("Não pode eliminar a sua própria conta de administrador.");
@@ -82,7 +87,8 @@ export default function GerirUtilizadores() {
     }
     if (window.confirm("Tem a certeza que quer eliminar este utilizador? Esta ação é PERMANENTE.")) {
       try {
-        const idToken = await currentUser.getIdToken(true);
+        // CORREÇÃO: Usar o 'auth.currentUser' que tem a função getIdToken
+        const idToken = await auth.currentUser.getIdToken(true);
         const response = await fetch('/api/deleteUser', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -99,6 +105,7 @@ export default function GerirUtilizadores() {
     }
   };
   
+  // O resto do teu componente (openPhotoModal, closePhotoModal, handleUpdatePhoto, JSX) permanece exatamente igual.
   const openPhotoModal = (user) => {
     setSelectedUser(user);
     setIsPhotoModalOpen(true);
@@ -161,7 +168,7 @@ export default function GerirUtilizadores() {
 
   return (
     <main className="min-h-screen bg-gray-100">
-      <Navbar /> {/* CORREÇÃO AQUI */}
+      <Navbar />
       <div className="container mx-auto px-4 py-12 pt-24">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800">Gerir Utilizadores</h1>

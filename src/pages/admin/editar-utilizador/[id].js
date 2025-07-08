@@ -1,5 +1,3 @@
-// src/pages/admin/editar-utilizador/[id].js
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../../context/AuthContext';
@@ -7,6 +5,9 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import Navbar from '../../../components/Navbar';
 import { Loader, User, Mail, AlertTriangle, ArrowLeft, Save } from 'lucide-react';
+// 1. Importar o nosso novo componente de histórico
+import HistoricoComprasUtilizador from '../../../components/HistoricoComprasUtilizador';
+
 
 export default function EditarUtilizador() {
   const { currentUser, loading: authLoading } = useAuth();
@@ -17,7 +18,6 @@ export default function EditarUtilizador() {
   const [pageLoading, setPageLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- NOVO ESTADO PARA GUARDAR O NOME A SER EDITADO ---
   const [newName, setNewName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -29,7 +29,7 @@ export default function EditarUtilizador() {
         if (userDocSnap.exists()) {
           const userData = { id: userDocSnap.id, ...userDocSnap.data() };
           setUser(userData);
-          setNewName(userData.name); // Inicializa o campo do formulário com o nome atual
+          setNewName(userData.name);
         } else {
           setError('Utilizador não encontrado.');
         }
@@ -41,9 +41,8 @@ export default function EditarUtilizador() {
     }
   }, [userId, currentUser, authLoading, router]);
   
-  // --- NOVA FUNÇÃO PARA PROCESSAR A MUDANÇA DE NOME ---
   const handleUpdateUsername = async (e) => {
-    e.preventDefault(); // Impede que a página recarregue ao submeter o formulário
+    e.preventDefault();
 
     if (newName.trim() === '' || newName === user.name) {
       alert("O novo nome não pode estar vazio ou ser igual ao nome atual.");
@@ -63,7 +62,6 @@ export default function EditarUtilizador() {
         throw new Error(data.error || "Ocorreu um erro na API.");
       }
 
-      // Atualiza o estado local para refletir a mudança imediatamente
       setUser(prevUser => ({ ...prevUser, name: newName.trim() }));
       alert(data.message);
 
@@ -74,7 +72,6 @@ export default function EditarUtilizador() {
       setIsSaving(false);
     }
   };
-
 
   if (pageLoading || authLoading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader className="animate-spin text-blue-600" size={48} /></div>;
@@ -111,7 +108,6 @@ export default function EditarUtilizador() {
                 <p className="text-base text-gray-700">{user.email}</p>
             </div>
 
-            {/* --- NOVO FORMULÁRIO PARA MUDAR O NOME --- */}
             <div className="border-t pt-6">
               <h2 className="text-xl font-semibold mb-4 text-gray-800">Alterar Nome de Utilizador</h2>
               <form onSubmit={handleUpdateUsername}>
@@ -133,6 +129,11 @@ export default function EditarUtilizador() {
                   </button>
                 </div>
               </form>
+            </div>
+            
+            {/* 2. SECÇÃO ADICIONADA: Histórico de Compras do Utilizador */}
+            <div className="border-t mt-8 pt-6">
+              <HistoricoComprasUtilizador userId={userId} />
             </div>
 
           </div>

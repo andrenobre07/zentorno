@@ -1,14 +1,13 @@
-// src/pages/perfil.js
-
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { User, Mail, LogOut, Loader, ShieldCheck, Edit, X, Check, KeyRound, Shield, Camera } from 'lucide-react';
-
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
-import { auth } from '../lib/firebaseConfig'; // Importamos 'auth' para aceder ao utilizador "vivo"
+import { auth } from '../lib/firebaseConfig';
+// 1. Importar o nosso novo componente de histórico
+import HistoricoComprasUtilizador from '../components/HistoricoComprasUtilizador';
 
 export default function Perfil() {
   const { currentUser, logout, loading, updateUsername, updateUserProfilePicture } = useAuth();
@@ -102,8 +101,6 @@ export default function Perfil() {
       return;
     }
 
-    // --- ALTERAÇÃO IMPORTANTE ---
-    // Verificamos se `auth.currentUser` existe antes de o usar
     const userToUpdate = auth.currentUser;
     if (!userToUpdate) {
         setPasswordError("Sessão inválida. Por favor, faça login novamente.");
@@ -114,7 +111,6 @@ export default function Perfil() {
     try {
       const credential = EmailAuthProvider.credential(userToUpdate.email, currentPassword);
       
-      // Usamos `userToUpdate` (o objeto "vivo" do Firebase) aqui
       await reauthenticateWithCredential(userToUpdate, credential);
       await updatePassword(userToUpdate, newPassword);
 
@@ -207,7 +203,6 @@ export default function Perfil() {
             </button>
             {showPasswordForm && (
               <form onSubmit={handleChangePassword} className="mt-6 space-y-4">
-                {/* O formulário permanece igual */}
                 <div><label className="block text-sm font-medium text-gray-700">Palavra-passe Atual</label><input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1 w-full p-3 border border-gray-300 rounded-lg" required /></div>
                 <div><label className="block text-sm font-medium text-gray-700">Nova Palavra-passe</label><input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="mt-1 w-full p-3 border border-gray-300 rounded-lg" required /></div>
                 <div><label className="block text-sm font-medium text-gray-700">Confirmar Nova Palavra-passe</label><input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 w-full p-3 border border-gray-300 rounded-lg" required /></div>
@@ -222,6 +217,12 @@ export default function Perfil() {
           </div>
           <div className="mt-8"><button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-red-600 text-white font-semibold rounded-lg transition-colors hover:bg-red-700"><LogOut size={18} />Terminar Sessão</button></div>
         </div>
+
+        {/* 2. SECÇÃO ADICIONADA: Histórico de Compras do Utilizador */}
+        <div className="max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-8 mt-8">
+          <HistoricoComprasUtilizador userId={currentUser.uid} />
+        </div>
+
       </div>
       <Footer />
     </main>

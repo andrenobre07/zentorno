@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../lib/firebaseConfig';
+// 1. IMPORTAR 'auth' DIRETAMENTE DA CONFIGURAÇÃO DO FIREBASE
+import { db, auth } from '../../lib/firebaseConfig'; 
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { Loader, AlertCircle, CheckCircle, Settings, Droplet, Car, Package } from 'lucide-react';
@@ -95,6 +96,12 @@ export default function CarDetails() {
 
     setCheckoutLoading(true);
     try {
+      // ########## A CORREÇÃO FINAL ESTÁ AQUI ##########
+      
+      // 2. Usar 'auth.currentUser' em vez de apenas 'currentUser' para obter o token.
+      //    'auth.currentUser' é o objeto "real" do Firebase que tem a função getIdToken.
+      const token = await auth.currentUser.getIdToken();
+
       const configuration = {
           totalPrice,
           color: selectedColor,
@@ -105,9 +112,10 @@ export default function CarDetails() {
       const response = await fetch('/api/checkout_sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // --- ALTERAÇÃO AQUI: Enviamos o ID do utilizador ---
-        body: JSON.stringify({ car, configuration, userId: currentUser.uid }),
+        body: JSON.stringify({ car, configuration, token: token }),
       });
+      
+      // ######################################################
       
       if (!response.ok) {
         const errorData = await response.json();
