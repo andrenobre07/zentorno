@@ -220,7 +220,7 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom Footer a*/}
+      {/* Bottom Footer */}
       <div className="border-t border-gray-800 py-6">
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
           <div className="text-gray-400 text-sm mb-4 md:mb-0">
