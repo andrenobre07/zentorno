@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { doc, getDoc } from 'firebase/firestore';
-// 1. IMPORTAR 'auth' DIRETAMENTE DA CONFIGURAÇÃO DO FIREBASE
+// Importamos 'auth' diretamente da configuração do Firebase
 import { db, auth } from '../../lib/firebaseConfig'; 
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -87,7 +87,9 @@ export default function CarDetails() {
     return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(price);
   };
 
-  const handleCheckout = async () => {
+  // ########## A ÚNICA ALTERAÇÃO ESTÁ AQUI ##########
+  // Esta função agora guarda os dados e redireciona para a nossa página de checkout.
+  const handleCheckout = () => {
     if (!currentUser) {
       alert("Por favor, faça login para continuar com a sua compra.");
       router.push(`/login?redirect=/car/${id}`);
@@ -95,50 +97,29 @@ export default function CarDetails() {
     }
 
     setCheckoutLoading(true);
+
+    // Junta a configuração completa num objeto
+    const configuration = {
+        totalPrice,
+        color: selectedColor,
+        interior: selectedInterior,
+        packages: selectedPackages,
+    };
+
+    // Guarda os dados no sessionStorage para a página seguinte poder aceder
     try {
-      // ########## A CORREÇÃO FINAL ESTÁ AQUI ##########
-      
-      // 2. Usar 'auth.currentUser' em vez de apenas 'currentUser' para obter o token.
-      //    'auth.currentUser' é o objeto "real" do Firebase que tem a função getIdToken.
-      const token = await auth.currentUser.getIdToken();
+      sessionStorage.setItem('checkoutConfig', JSON.stringify(configuration));
+      sessionStorage.setItem('checkoutCar', JSON.stringify(car));
 
-      const configuration = {
-          totalPrice,
-          color: selectedColor,
-          interior: selectedInterior,
-          packages: selectedPackages,
-      };
-
-      const response = await fetch('/api/checkout_sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ car, configuration, token: token }),
-      });
-      
-      // ######################################################
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Falha ao criar a sessão de pagamento.');
-      }
-
-      const session = await response.json();
-      const stripe = await stripePromise;
-      
-      const result = await stripe.redirectToCheckout({
-        sessionId: session.id,
-      });
-
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
+      // Redireciona para a nova página de checkout personalizada
+      router.push('/checkout');
     } catch (err) {
-      console.error('Checkout error:', err);
-      alert(`Erro ao iniciar o pagamento: ${err.message}`);
-    } finally {
+      console.error("Erro ao guardar dados para checkout:", err);
+      alert("Ocorreu um erro ao preparar a sua encomenda. Tente novamente.");
       setCheckoutLoading(false);
     }
   };
+  // ######################################################
   
   if (loading) {
     return (
@@ -214,7 +195,7 @@ export default function CarDetails() {
                     <div className="space-y-3">
                         {car.packages.map(pkg => (
                             <label key={pkg.name} className="flex items-center p-4 bg-gray-50 rounded-lg border has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50 transition-all cursor-pointer">
-                                <input type="checkbox" onChange={() => handlePackageToggle(pkg.name)} className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
+                                <input type="checkbox" onChange={() => handlePackageToggle(pkg.name)} checked={selectedPackages.includes(pkg.name)} className="h-5 w-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
                                 <span className="ml-4 text-base font-medium text-gray-900">{pkg.name} <span className="text-gray-500">(+{formatPrice(pkg.price)})</span></span>
                             </label>
                         ))}
@@ -232,7 +213,7 @@ export default function CarDetails() {
                 className="w-full mt-6 bg-blue-600 text-white font-bold py-4 rounded-lg text-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {checkoutLoading && <Loader className="w-6 h-6 animate-spin"/>}
-                {checkoutLoading ? 'A Processar...' : 'Encomendar Agora'}
+                {checkoutLoading ? 'A Processar...' : 'Próximo Passo'}
               </button>
             </div>
           </div>
