@@ -143,7 +143,7 @@ export default function Registrar() {
                   <input id="terms" type="checkbox" checked={termsAccepted} onChange={(e) => setTermsAccepted(e.target.checked)} className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"/>
                 </div>
                 <div className="ml-3 text-sm">
-                  <label htmlFor="terms" className="text-gray-600">Eu aceito os <a href="#" className="text-blue-600 hover:text-blue-800">Termos de Serviço</a> e a <a href="#" className="text-blue-600 hover:text-blue-800">Política de Privacidade</a></label>
+                  <label htmlFor="terms" className="text-gray-600">Eu aceito os <a href="/termos-de-uso" className="text-blue-600 hover:text-blue-800">Termos de Uso</a> e a <a href="/politica-de-privacidade" className="text-blue-600 hover:text-blue-800">Política de Privacidade</a></label>
                   {formErrors.terms && <p className="mt-1 text-sm text-red-600">{formErrors.terms}</p>}
                 </div>
               </div>

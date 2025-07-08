@@ -110,7 +110,7 @@ export default function Login() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700">Senha</label>
-                    <Link href="/esqueci-senha" className="text-sm text-blue-600 hover:text-blue-800">Esqueceste-te da senha?</Link>
+                   
                   </div>
                   <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" placeholder="Digita a tua senha" required />
                 </div>
