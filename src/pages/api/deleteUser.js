@@ -1,59 +1,60 @@
-// pages/api/deleteUser.js
-
 import admin from '../../lib/firebaseAdminConfig';
+import { getFirestore } from 'firebase-admin/firestore';
+
+const db = getFirestore();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).json({ error: `Método ${req.method} não permitido.` });
+    return res.status(405).json({ error: 'Método não permitido.' });
   }
 
   try {
-    // ▼▼▼ AQUI ESTÁ A CORREÇÃO ▼▼▼
-    // Procuramos por 'authorization' em minúsculas, que é como a Vercel envia.
-    // O '||' garante que funciona tanto localmente (possivelmente com 'A' maiúsculo) como na Vercel.
-    const authorizationHeader = req.headers.authorization || req.headers.Authorization;
+    const { idToken, uidToDelete } = req.body;
+
+    if (!idToken || !uidToDelete) {
+      return res.status(400).json({ error: 'Faltam parâmetros obrigatórios: idToken ou uidToDelete.' });
+    }
+
+    // Verifica o token do administrador para garantir que o pedido é legítimo
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const adminUid = decodedToken.uid;
+
+    const adminDocRef = db.collection('admins').doc(adminUid);
+    const adminDoc = await adminDocRef.get();
+
+    if (!adminDoc.exists) {
+      return res.status(403).json({ error: 'Ação negada. Apenas administradores podem executar esta ação.' });
+    }
+
+    // --- LÓGICA DE ELIMINAÇÃO ROBUSTA ---
+
+    // 1. Tenta apagar o utilizador da Autenticação do Firebase
+    try {
+      await admin.auth().deleteUser(uidToDelete);
+      console.log(`Utilizador ${uidToDelete} apagado com sucesso da Autenticação.`);
+    } catch (error) {
+      // Se o erro for 'user-not-found', é porque já não existe.
+      // Ignoramos este erro específico e continuamos, para limpar o Firestore.
+      if (error.code === 'auth/user-not-found') {
+        console.log(`Utilizador ${uidToDelete} não foi encontrado na Autenticação, provavelmente já foi apagado. A continuar para limpar o Firestore.`);
+      } else {
+        // Se for qualquer outro erro, aí sim é um problema. Lançamos o erro para parar a execução.
+        throw error;
+      }
+    }
+
+    // 2. Apaga o documento do utilizador do Firestore (isto irá correr sempre, mesmo que o utilizador já não exista na autenticação)
+    await db.collection('users').doc(uidToDelete).delete();
+    console.log(`Documento do utilizador ${uidToDelete} apagado com sucesso do Firestore.`);
     
-    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Token de autorização em falta ou mal formatado.' });
-    }
-    // ▲▲▲ FIM DA CORREÇÃO ▲▲▲
+    // 3. Bónus: Garante que também é removido da coleção de admins, se existir.
+    await db.collection('admins').doc(uidToDelete).delete().catch(() => { /* ignora erros se não existir */ });
 
-    const { uidToDelete } = req.body;
 
-    if (!uidToDelete) {
-      return res.status(400).json({ error: 'O UID do utilizador a eliminar não foi fornecido.' });
-    }
-
-    const token = authorizationHeader.split('Bearer ')[1];
-
-    const decodedToken = await admin.auth().verifyIdToken(token);
-
-    // Verificação de segurança: Apenas admins podem apagar utilizadores.
-    if (decodedToken.admin !== true) {
-      return res.status(403).json({ error: 'Acesso negado. Apenas administradores podem eliminar utilizadores.' });
-    }
-    
-    if (decodedToken.uid === uidToDelete) {
-        return res.status(400).json({ error: 'Um administrador não se pode eliminar a si próprio.' });
-    }
-
-    await admin.auth().deleteUser(uidToDelete);
-
-    return res.status(200).json({ message: `Utilizador ${uidToDelete} eliminado com sucesso.` });
+    return res.status(200).json({ message: 'Utilizador e todos os seus dados foram eliminados com sucesso.' });
 
   } catch (error) {
     console.error('Erro na API /api/deleteUser:', error);
-
-    let errorMessage = 'Ocorreu um erro interno no servidor.';
-    if (error.code === 'auth/user-not-found') {
-        errorMessage = 'O utilizador que tentou eliminar não foi encontrado.';
-    } else if (error.code === 'auth/id-token-expired') {
-        errorMessage = 'A sua sessão expirou. Por favor, faça login novamente.';
-    } else if (error.code === 'auth/argument-error') {
-        errorMessage = 'O token de autenticação é inválido. Por favor, atualize a página e tente novamente.';
-    }
-
-    return res.status(500).json({ error: errorMessage });
+    return res.status(500).json({ error: 'Ocorreu um erro interno no servidor.', details: error.message });
   }
 }

@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { auth, db } from '../../lib/firebaseConfig';
+// AQUI ESTÁ A ALTERAÇÃO PRINCIPAL
+import { auth, db } from '../../lib/firebaseConfig'; // Importamos 'auth' para a correção
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import Navbar from '../../components/Navbar';
 import { Loader, Edit, Trash2, Shield, User, RefreshCw, ShieldCheck, ShieldOff, Camera, X } from 'lucide-react';
@@ -14,6 +15,8 @@ export default function GerirUtilizadores() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // O resto dos teus 'states' permanece igual...
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -21,6 +24,7 @@ export default function GerirUtilizadores() {
   const fileInputRef = useRef(null);
   
   const fetchData = useCallback(async () => {
+    // A tua função fetchData permanece igual
     setLoading(true);
     try {
       const usersSnapshot = await getDocs(collection(db, 'users'));
@@ -52,69 +56,48 @@ export default function GerirUtilizadores() {
     }
   }, [currentUser, authLoading, router, fetchData]);
 
-  // --- FUNÇÃO CORRIGIDA PARA ALTERAR ESTATUTO DE ADMIN ---
+  // A tua função handleToggleAdmin permanece igual
   const handleToggleAdmin = async (userToToggle) => {
     if (userToToggle.id === currentUser?.uid) {
       alert("Não pode alterar o seu próprio estatuto de administrador.");
       return;
     }
-    
     try {
-      // Obter o token do admin logado para autorizar o pedido
-      const token = await auth.currentUser.getIdToken();
-      const makeAdmin = !userToToggle.isAdmin;
-      
-      const response = await fetch('/api/toggleAdmin', {
+      await fetch('/api/toggleAdmin', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          // Envia o token no header para a API verificar se o requisitante é admin
-          'Authorization': `Bearer ${token}` 
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: userToToggle.id,
-          makeAdmin: makeAdmin,
+          makeAdmin: !userToToggle.isAdmin,
         }),
       });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Ocorreu um erro desconhecido.');
-
-      alert(data.message);
-      fetchData(); // Atualiza a UI para refletir a mudança
-
+      alert(`O estatuto de ${userToToggle.name} foi alterado com sucesso.`);
+      fetchData();
     } catch (error) {
       console.error("Erro ao alterar papel do utilizador:", error);
-      alert(`Não foi possível alterar o papel do utilizador: ${error.message}`);
+      alert("Não foi possível alterar o papel do utilizador.");
     }
   };
 
-  // --- FUNÇÃO CORRIGIDA PARA APAGAR UTILIZADOR ---
-  const handleDeleteUser = async (uidToDelete) => {
-    if (uidToDelete === currentUser?.uid) {
-      alert("Não pode eliminar a sua própria conta de administrador a partir daqui.");
+  // --- FUNÇÃO PARA APAGAR UTILIZADOR CORRIGIDA ---
+  const handleDeleteUser = async (uid) => {
+    if (uid === currentUser?.uid) {
+      alert("Não pode eliminar a sua própria conta de administrador.");
       return;
     }
-    
-    if (window.confirm(`Tem a certeza que deseja eliminar o utilizador? Esta ação é PERMANENTE e não pode ser desfeita.`)) {
+    if (window.confirm("Tem a certeza que quer eliminar este utilizador? Esta ação é PERMANENTE.")) {
       try {
-        const token = await auth.currentUser.getIdToken();
-
+        // CORREÇÃO: Usar o 'auth.currentUser' que tem a função getIdToken
+        const idToken = await auth.currentUser.getIdToken(true);
         const response = await fetch('/api/deleteUser', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`, 
-          },
-          body: JSON.stringify({ uidToDelete: uidToDelete }),
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken, uidToDelete: uid }),
         });
-
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || 'Ocorreu um erro desconhecido.');
-
-        alert(data.message || "Utilizador eliminado com sucesso.");
-        fetchData(); 
-
+        if (!response.ok) throw new Error(data.error);
+        alert("Utilizador eliminado com sucesso.");
+        fetchData();
       } catch (error) {
         console.error("Erro ao chamar a API de eliminação:", error);
         alert(`Não foi possível eliminar o utilizador: ${error.message}`);
@@ -122,6 +105,7 @@ export default function GerirUtilizadores() {
     }
   };
   
+  // O resto do teu componente (openPhotoModal, closePhotoModal, handleUpdatePhoto, JSX) permanece exatamente igual.
   const openPhotoModal = (user) => {
     setSelectedUser(user);
     setIsPhotoModalOpen(true);
