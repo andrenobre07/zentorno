@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
-import { auth, db } from '../../lib/firebaseConfig'; // Importa o auth para obter o token do user logado
+import { auth, db } from '../../lib/firebaseConfig';
 import { collection, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
 import Navbar from '../../components/Navbar';
 import { Loader, Edit, Trash2, Shield, User, RefreshCw, ShieldCheck, ShieldOff, Camera, X } from 'lucide-react';
@@ -52,31 +52,44 @@ export default function GerirUtilizadores() {
     }
   }, [currentUser, authLoading, router, fetchData]);
 
+  // --- FUNÇÃO CORRIGIDA PARA ALTERAR ESTATUTO DE ADMIN ---
   const handleToggleAdmin = async (userToToggle) => {
     if (userToToggle.id === currentUser?.uid) {
       alert("Não pode alterar o seu próprio estatuto de administrador.");
       return;
     }
+    
     try {
-      // Esta chamada à API /api/toggleAdmin presume que tens uma API para isso.
-      // Se não tiveres, esta lógica precisa ser implementada no lado do servidor.
-      await fetch('/api/toggleAdmin', {
+      // Obter o token do admin logado para autorizar o pedido
+      const token = await auth.currentUser.getIdToken();
+      const makeAdmin = !userToToggle.isAdmin;
+      
+      const response = await fetch('/api/toggleAdmin', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          // Envia o token no header para a API verificar se o requisitante é admin
+          'Authorization': `Bearer ${token}` 
+        },
         body: JSON.stringify({
           userId: userToToggle.id,
-          makeAdmin: !userToToggle.isAdmin,
+          makeAdmin: makeAdmin,
         }),
       });
-      alert(`O estatuto de ${userToToggle.name} foi alterado com sucesso.`);
-      fetchData();
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Ocorreu um erro desconhecido.');
+
+      alert(data.message);
+      fetchData(); // Atualiza a UI para refletir a mudança
+
     } catch (error) {
       console.error("Erro ao alterar papel do utilizador:", error);
-      alert("Não foi possível alterar o papel do utilizador.");
+      alert(`Não foi possível alterar o papel do utilizador: ${error.message}`);
     }
   };
 
-  // --- FUNÇÃO PARA APAGAR UTILIZADOR CORRIGIDA E FINAL ---
+  // --- FUNÇÃO CORRIGIDA PARA APAGAR UTILIZADOR ---
   const handleDeleteUser = async (uidToDelete) => {
     if (uidToDelete === currentUser?.uid) {
       alert("Não pode eliminar a sua própria conta de administrador a partir daqui.");
@@ -85,30 +98,22 @@ export default function GerirUtilizadores() {
     
     if (window.confirm(`Tem a certeza que deseja eliminar o utilizador? Esta ação é PERMANENTE e não pode ser desfeita.`)) {
       try {
-        // 1. Obter o token do utilizador logado (o administrador)
         const token = await auth.currentUser.getIdToken();
 
-        // 2. Chamar a API, enviando o token no header e o UID no body
         const response = await fetch('/api/deleteUser', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // O token é enviado no cabeçalho de autorização, que é a prática correta.
             'Authorization': `Bearer ${token}`, 
           },
-          // O body agora só contém o UID do utilizador a ser eliminado.
           body: JSON.stringify({ uidToDelete: uidToDelete }),
         });
 
         const data = await response.json();
-
-        if (!response.ok) {
-          // A mensagem de erro vem diretamente da nossa API.
-          throw new Error(data.error || 'Ocorreu um erro desconhecido.');
-        }
+        if (!response.ok) throw new Error(data.error || 'Ocorreu um erro desconhecido.');
 
         alert(data.message || "Utilizador eliminado com sucesso.");
-        fetchData(); // Atualiza a lista na UI
+        fetchData(); 
 
       } catch (error) {
         console.error("Erro ao chamar a API de eliminação:", error);
