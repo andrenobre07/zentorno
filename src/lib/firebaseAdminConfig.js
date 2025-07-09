@@ -1,20 +1,20 @@
+// src/lib/firebaseAdminConfig.js
 import admin from 'firebase-admin';
 
-// Verifica se a aplicação já foi inicializada para evitar erros
+// Verifica se a app já foi inicializada para evitar erros
 if (!admin.apps.length) {
   try {
-    // --- A CORREÇÃO ESTÁ AQUI ---
-    // 1. Lemos a chave privada codificada em Base64 da variável de ambiente
+    // Leitura da chave privada codificada em Base64 da variável de ambiente
     const privateKeyBase64 = process.env.FIREBASE_PRIVATE_KEY;
     
-    // 2. Descodificamos a chave de Base64 de volta para o seu formato original com quebras de linha
+    // Descodificação da chave de Base64 de volta para o seu formato original
     const privateKey = Buffer.from(privateKeyBase64, 'base64').toString('utf8');
 
     admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
+        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        // 3. Usamos a chave descodificada
+        // Usamos a chave descodificada
         privateKey: privateKey,
       }),
     });
