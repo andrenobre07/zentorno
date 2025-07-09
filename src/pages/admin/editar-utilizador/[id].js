@@ -139,8 +139,8 @@ export default function EditarUtilizador() {
             </div>
             
             <div className="border-t mt-8 pt-6">
-              {/* Adicionamos a propriedade 'isAdminView' para mostrar os controlos de admin */}
-              <HistoricoComprasUtilizador userId={userId} isAdminView={true} />
+              {/* ALTERAÇÃO AQUI: A propriedade 'isAdminView' foi passada como 'false' para ocultar os controlos de admin */}
+              <HistoricoComprasUtilizador userId={userId} isAdminView={false} />
             </div>
 
           </div>
