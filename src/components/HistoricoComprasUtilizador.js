@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { db } from '../lib/firebaseConfig';
+import { db, auth } from '../lib/firebaseConfig';
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { Loader, ShoppingBag, Calendar } from 'lucide-react';
+import { Loader, ShoppingBag, Calendar, Trash2 } from 'lucide-react';
 
-// Este componente recebe o ID de um utilizador e mostra o seu histórico
-export default function HistoricoComprasUtilizador({ userId }) {
+export default function HistoricoComprasUtilizador({ userId, isAdminView = false }) {
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Se não recebermos um userId, não fazemos nada
     if (!userId) {
       setLoading(false);
       return;
@@ -20,7 +18,6 @@ export default function HistoricoComprasUtilizador({ userId }) {
       setLoading(true);
       setError(null);
       try {
-        // Query para ir buscar as compras do utilizador específico, ordenadas por data
         const q = query(
           collection(db, 'purchases'),
           where('userId', '==', userId),
@@ -30,7 +27,6 @@ export default function HistoricoComprasUtilizador({ userId }) {
         const userPurchases = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          // Converte o Timestamp do Firebase para um objeto Date do JavaScript
           purchaseDate: doc.data().purchaseDate.toDate(),
         }));
         setPurchases(userPurchases);
@@ -43,7 +39,35 @@ export default function HistoricoComprasUtilizador({ userId }) {
     };
 
     fetchPurchases();
-  }, [userId]); // O useEffect corre sempre que o userId mudar
+  }, [userId]);
+
+  const handleDeletePurchase = async (purchaseId) => {
+    if (!window.confirm("Tem a certeza que quer eliminar permanentemente este registo de compra?")) {
+        return;
+    }
+
+    try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch('/api/deletePurchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, purchaseId }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Ocorreu um erro na API.');
+        }
+
+        setPurchases(currentPurchases => currentPurchases.filter(p => p.id !== purchaseId));
+        alert('Registo de compra eliminado com sucesso.');
+
+    } catch (err) {
+        console.error("Erro ao apagar compra:", err);
+        alert(`Não foi possível apagar o registo: ${err.message}`);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -74,19 +98,34 @@ export default function HistoricoComprasUtilizador({ userId }) {
                 <div>
                   <p className="flex items-center gap-2 text-sm text-gray-500">
                     <Calendar size={14} />
-                    {purchase.purchaseDate.toLocaleDateString('pt-PT', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    {purchase.purchaseDate.toLocaleDateString('pt-PT')} às {purchase.purchaseDate.toLocaleTimeString('pt-PT')}
                   </p>
-                  <p className="text-xs text-gray-400 mt-1">ID: {purchase.purchaseId}</p>
+                  <p className="text-xs text-gray-400 mt-1">ID da Compra: {purchase.purchaseId}</p>
                 </div>
-                <p className="font-bold text-xl text-blue-600">{purchase.amount.toFixed(2)}€</p>
+                <div className="flex items-center gap-4">
+                    <p className="font-bold text-xl text-blue-600">{purchase.amount.toFixed(2)}€</p>
+                    {isAdminView && (
+                        <button 
+                            onClick={() => handleDeletePurchase(purchase.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+                            title="Eliminar este registo de compra"
+                        >
+                            <Trash2 size={18} />
+                        </button>
+                    )}
+                </div>
               </div>
               <div>
                 <ul className="space-y-1">
                   {purchase.products.map((product, index) => (
-                    <li key={index} className="flex justify-between items-center text-sm text-gray-700">
-                      <span>{product.name} (x{product.quantity})</span>
-                      <span className="font-medium text-gray-800">{(product.amount).toFixed(2)}€</span>
+                    // ########## ALTERAÇÕES FEITAS AQUI ##########
+                    <li key={index} className="text-sm text-gray-700">
+                      {/* 1. Removi o "(x{product.quantity})" */}
+                      <span>{product.name}</span>
+                      
+                      {/* 2. O preço individual que aparecia à direita foi removido daqui. */}
                     </li>
+                    // #############################################
                   ))}
                 </ul>
               </div>

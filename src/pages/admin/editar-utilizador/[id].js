@@ -5,7 +5,6 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import Navbar from '../../../components/Navbar';
 import { Loader, User, Mail, AlertTriangle, ArrowLeft, Save } from 'lucide-react';
-// 1. Importar o nosso novo componente de histórico
 import HistoricoComprasUtilizador from '../../../components/HistoricoComprasUtilizador';
 
 
@@ -37,7 +36,7 @@ export default function EditarUtilizador() {
       };
       fetchUserData();
     } else if (!authLoading) {
-      router.push('/');
+      if (typeof window !== 'undefined') router.push('/');
     }
   }, [userId, currentUser, authLoading, router]);
   
@@ -78,7 +77,15 @@ export default function EditarUtilizador() {
   }
   
   if (error) {
-    return <div className="min-h-screen flex flex-col items-center justify-center"><AlertTriangle className="text-red-500 mb-4" size={48} /> <p className="text-red-500">{error}</p></div>;
+    return (
+        <main className="min-h-screen bg-gray-100">
+            <Navbar />
+            <div className="container mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-100px)]">
+                <AlertTriangle className="text-red-500 mb-4" size={48} /> 
+                <p className="text-red-500">{error}</p>
+            </div>
+        </main>
+    );
   }
   
   return (
@@ -131,9 +138,9 @@ export default function EditarUtilizador() {
               </form>
             </div>
             
-            {/* 2. SECÇÃO ADICIONADA: Histórico de Compras do Utilizador */}
             <div className="border-t mt-8 pt-6">
-              <HistoricoComprasUtilizador userId={userId} />
+              {/* Adicionamos a propriedade 'isAdminView' para mostrar os controlos de admin */}
+              <HistoricoComprasUtilizador userId={userId} isAdminView={true} />
             </div>
 
           </div>

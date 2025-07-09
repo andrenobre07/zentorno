@@ -74,9 +74,7 @@ export default function Login() {
                 <h2 className="text-3xl font-bold mb-4">Encontra o teu carro ideal</h2>
                 <p className="text-lg mb-6">Acessa a tua conta para explorar mais de 100 modelos exclusivos e personalizá-los ao teu estilo</p>
                 <div className="flex gap-2 justify-center">
-                  <div className="w-3 h-3 rounded-full bg-white"></div>
-                  <div className="w-3 h-3 rounded-full bg-white opacity-60"></div>
-                  <div className="w-3 h-3 rounded-full bg-white opacity-60"></div>
+                 
                 </div>
               </motion.div>
             </div>
