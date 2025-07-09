@@ -1,8 +1,10 @@
+// src/pages/api/checkout_sessions.js
 import Stripe from 'stripe';
-import admin from '../../lib/firebaseAdminConfig';
+import admin from '../../lib/firebaseAdminConfig'; // Alterado para importar a configuração corrigida
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+// ... (o resto da sua função calculateOrderAmount permanece igual)
 const calculateOrderAmount = (car, configuration) => {
     let total = car.preco;
     if (configuration.color && typeof configuration.color.price === 'number') {
@@ -22,7 +24,6 @@ const calculateOrderAmount = (car, configuration) => {
     return Math.round(total * 100);
 };
 
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -39,6 +40,7 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Detalhes do carro ou da configuração em falta.' });
     }
 
+    // Agora o 'admin' importado já está inicializado
     const decodedToken = await admin.auth().verifyIdToken(token);
     const uid = decodedToken.uid;
     const userEmail = decodedToken.email;
@@ -62,10 +64,6 @@ export default async function handler(req, res) {
             interior: configuration.interior.name,
             packages: configuration.packages.join(', ') || 'Nenhum',
         },
-        // ########## A CORREÇÃO ESTÁ AQUI ##########
-        // O bloco 'shipping' foi REMOVIDO para evitar conflitos.
-        // O frontend agora é o único responsável pela morada.
-        // ###########################################
     });
 
     res.status(200).json({
@@ -73,7 +71,9 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
+    // Este log é crucial para debugging na Vercel
     console.error('API Error:', error);
+    // Devolve uma mensagem de erro mais clara para o frontend
     res.status(500).json({ error: `Erro do servidor: ${error.message}` });
   }
 }
